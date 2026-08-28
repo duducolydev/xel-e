@@ -1,0 +1,46 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+.next/
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# turborepo
+.turbo/
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# testing
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# misc
+.DS_Store
+Thumbs.db
+*.pem
+
+# editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# local agent state
+.claude/
+
+# docker volumes (local dev data)
+.docker-data/
