@@ -12,6 +12,8 @@ jobs:
   quality:
     name: Lint, typecheck, unit tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://xele:xele@localhost:5433/xele
     steps:
       - uses: actions/checkout@v4
 
@@ -85,6 +87,9 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
+      - name: Apply database migrations
+        run: pnpm --filter @xel-e/api exec prisma migrate deploy
+
       - name: Run e2e tests
         run: pnpm e2e
 
@@ -92,6 +97,8 @@ jobs:
     name: Build
     needs: quality
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://xele:xele@localhost:5433/xele
     steps:
       - uses: actions/checkout@v4
 

@@ -1,29 +1,17 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Pool } from "pg";
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 import { Pinger } from "../pinger";
 
 @Injectable()
-export class DatabaseIndicator implements Pinger, OnModuleDestroy {
-  private readonly pool: Pool;
-
-  constructor(config: ConfigService) {
-    this.pool = new Pool({
-      connectionString: config.get<string>("DATABASE_URL"),
-      connectionTimeoutMillis: 2000,
-    });
-  }
+export class DatabaseIndicator implements Pinger {
+  constructor(private readonly prisma: PrismaService) {}
 
   async ping(): Promise<boolean> {
     try {
-      await this.pool.query("SELECT 1");
+      await this.prisma.$queryRaw`SELECT 1`;
       return true;
     } catch {
       return false;
     }
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
   }
 }

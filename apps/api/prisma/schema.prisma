@@ -1,0 +1,345 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "../../../DOCS/erd_prisma.svg"
+  theme    = "neutral"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ELEVE
+  PROFESSEUR
+  PARENT
+  ADMIN
+}
+
+enum StatutLecon {
+  BROUILLON
+  EN_REVUE
+  PUBLIE
+}
+
+enum TypeQuestion {
+  QCM
+  VRAI_FAUX
+  REPONSE_COURTE
+}
+
+enum StatutAbonnement {
+  ACTIF
+  EXPIRE
+  ANNULE
+}
+
+enum StatutPaiement {
+  EN_ATTENTE
+  CONFIRME
+  ECHOUE
+}
+
+// ---------------------------------------------------------------------------
+// Utilisateurs
+// ---------------------------------------------------------------------------
+
+model User {
+  id             String  @id @default(uuid())
+  email          String? @unique
+  identifiant    String? @unique
+  motDePasseHash String
+  role           Role
+  nomComplet     String
+  pseudonyme     String? @unique
+
+  niveauId String?
+  niveau   Niveau? @relation(fields: [niveauId], references: [id])
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  enfants          ParentLink[]      @relation("ParentDeUser")
+  parents          ParentLink[]      @relation("EnfantDeUser")
+  progressions     Progression[]
+  tentatives       Tentative[]
+  badges           BadgeUtilisateur[]
+  sujetsForum      SujetForum[]
+  messages         Message[]
+  signalements     Signalement[]
+  abonnements      Abonnement[]
+  notifications    Notification[]
+  leconsRedigees   Lecon[]
+
+  @@index([role])
+  @@index([niveauId])
+}
+
+model ParentLink {
+  id        String   @id @default(uuid())
+  parentId  String
+  parent    User     @relation("ParentDeUser", fields: [parentId], references: [id])
+  enfantId  String
+  enfant    User     @relation("EnfantDeUser", fields: [enfantId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([parentId, enfantId])
+  @@index([enfantId])
+}
+
+// ---------------------------------------------------------------------------
+// Référentiel pédagogique
+// ---------------------------------------------------------------------------
+
+model Niveau {
+  id      String @id @default(uuid())
+  libelle String @unique
+  ordre   Int    @unique
+
+  utilisateurs User[]
+  chapitres    Chapitre[]
+  sujetsForum  SujetForum[]
+}
+
+model Matiere {
+  id      String @id @default(uuid())
+  libelle String @unique
+
+  chapitres   Chapitre[]
+  sujetsForum SujetForum[]
+}
+
+model Chapitre {
+  id        String  @id @default(uuid())
+  niveauId  String
+  niveau    Niveau  @relation(fields: [niveauId], references: [id])
+  matiereId String
+  matiere   Matiere @relation(fields: [matiereId], references: [id])
+  titre     String
+  ordre     Int
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  lecons Lecon[]
+
+  @@unique([niveauId, matiereId, ordre])
+}
+
+model Lecon {
+  id          String      @id @default(uuid())
+  chapitreId  String
+  chapitre    Chapitre    @relation(fields: [chapitreId], references: [id])
+  titre       String
+  contenu     String?
+  statut      StatutLecon @default(BROUILLON)
+  version     Int         @default(1)
+  ordre       Int
+  auteurId    String?
+  auteur      User?       @relation(fields: [auteurId], references: [id])
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  quiz         Quiz?
+  progressions Progression[]
+
+  @@unique([chapitreId, ordre])
+  @@index([statut])
+}
+
+// ---------------------------------------------------------------------------
+// Quiz et évaluation
+// ---------------------------------------------------------------------------
+
+model Quiz {
+  id        String  @id @default(uuid())
+  leconId   String  @unique
+  lecon     Lecon   @relation(fields: [leconId], references: [id])
+  dureeMax  Int?
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  questions  Question[]
+  tentatives Tentative[]
+}
+
+model Question {
+  id               String       @id @default(uuid())
+  quizId           String
+  quiz             Quiz         @relation(fields: [quizId], references: [id])
+  type             TypeQuestion
+  enonce           String
+  choix            Json?
+  reponseCorrecte  Json
+  bareme           Int          @default(1)
+  ordre            Int
+
+  @@index([quizId])
+}
+
+model Tentative {
+  id           String    @id @default(uuid())
+  quizId       String
+  quiz         Quiz      @relation(fields: [quizId], references: [id])
+  utilisateurId String
+  utilisateur  User      @relation(fields: [utilisateurId], references: [id])
+  reponses     Json?
+  score        Float?
+  demarreLe    DateTime  @default(now())
+  termineLe    DateTime?
+
+  @@index([quizId])
+  @@index([utilisateurId])
+}
+
+// ---------------------------------------------------------------------------
+// Progression et gamification
+// ---------------------------------------------------------------------------
+
+model Progression {
+  id            String    @id @default(uuid())
+  utilisateurId String
+  utilisateur   User      @relation(fields: [utilisateurId], references: [id])
+  leconId       String
+  lecon         Lecon     @relation(fields: [leconId], references: [id])
+  pourcentage   Int       @default(0)
+  xp            Int       @default(0)
+  termineLe     DateTime?
+
+  @@unique([utilisateurId, leconId])
+}
+
+model Badge {
+  id          String @id @default(uuid())
+  code        String @unique
+  libelle     String
+  description String?
+
+  utilisateurs BadgeUtilisateur[]
+}
+
+model BadgeUtilisateur {
+  id            String   @id @default(uuid())
+  utilisateurId String
+  utilisateur   User     @relation(fields: [utilisateurId], references: [id])
+  badgeId       String
+  badge         Badge    @relation(fields: [badgeId], references: [id])
+  obtenuLe      DateTime @default(now())
+
+  @@unique([utilisateurId, badgeId])
+}
+
+// ---------------------------------------------------------------------------
+// Forum
+// ---------------------------------------------------------------------------
+
+model SujetForum {
+  id        String   @id @default(uuid())
+  niveauId  String
+  niveau    Niveau   @relation(fields: [niveauId], references: [id])
+  matiereId String
+  matiere   Matiere  @relation(fields: [matiereId], references: [id])
+  titre     String
+  auteurId  String
+  auteur    User     @relation(fields: [auteurId], references: [id])
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  messages Message[]
+
+  @@index([niveauId, matiereId])
+}
+
+model Message {
+  id       String     @id @default(uuid())
+  sujetId  String
+  sujet    SujetForum @relation(fields: [sujetId], references: [id])
+  auteurId String
+  auteur   User       @relation(fields: [auteurId], references: [id])
+  contenu  String
+  masque   Boolean    @default(false)
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  signalements Signalement[]
+
+  @@index([sujetId])
+}
+
+model Signalement {
+  id           String   @id @default(uuid())
+  messageId    String
+  message      Message  @relation(fields: [messageId], references: [id])
+  signalantId  String
+  signalant    User     @relation(fields: [signalantId], references: [id])
+  motif        String?
+  createdAt    DateTime @default(now())
+
+  @@unique([messageId, signalantId])
+}
+
+// ---------------------------------------------------------------------------
+// Abonnements et paiements
+// ---------------------------------------------------------------------------
+
+model Abonnement {
+  id            String            @id @default(uuid())
+  utilisateurId String
+  utilisateur   User              @relation(fields: [utilisateurId], references: [id])
+  plan          String
+  statut        StatutAbonnement  @default(ACTIF)
+  expireLe      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paiements Paiement[]
+
+  @@index([utilisateurId])
+}
+
+model Paiement {
+  id           String         @id @default(uuid())
+  abonnementId String
+  abonnement   Abonnement     @relation(fields: [abonnementId], references: [id])
+  fournisseur  String
+  statut       StatutPaiement @default(EN_ATTENTE)
+  montant      Int
+  refExterne   String         @unique
+  createdAt    DateTime       @default(now())
+
+  @@index([abonnementId])
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id            String   @id @default(uuid())
+  utilisateurId String
+  utilisateur   User     @relation(fields: [utilisateurId], references: [id])
+  type          String
+  contenu       String
+  lu            Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([utilisateurId])
+}

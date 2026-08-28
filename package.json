@@ -23,8 +23,12 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
       "@swc/core",
-      "esbuild"
+      "esbuild",
+      "prisma",
+      "puppeteer"
     ]
   }
 }

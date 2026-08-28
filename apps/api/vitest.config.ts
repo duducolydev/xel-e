@@ -5,12 +5,12 @@ export default defineConfig({
   test: {
     globals: true,
     root: "./",
-    include: ["src/**/*.spec.ts"],
+    include: ["src/**/*.spec.ts", "prisma/**/*.spec.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
-      include: ["src/**/*.ts"],
-      exclude: ["src/**/*.spec.ts", "src/main.ts"],
+      include: ["src/**/*.ts", "prisma/**/*.ts"],
+      exclude: ["src/**/*.spec.ts", "src/main.ts", "prisma/**/*.spec.ts"],
     },
   },
   plugins: [swc.vite({ module: { type: "es6" } })],
