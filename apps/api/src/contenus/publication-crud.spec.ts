@@ -13,16 +13,16 @@ function creerService() {
     matiere: { findUniqueOrThrow: vi.fn().mockResolvedValue({ id: "matiere-pc" }) },
     chapitre: {
       aggregate: vi.fn().mockResolvedValue({ _max: { ordre: 2 } }),
-      create: vi.fn(async ({ data }: { data: object }) => ({ id: "chapitre-1", ...data })),
+      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: "chapitre-1", ...data })),
       findFirst: vi.fn().mockResolvedValue({ id: "chapitre-1", deletedAt: null }),
       findMany: vi.fn().mockResolvedValue([]),
-      update: vi.fn(async ({ data }: { data: object }) => ({ id: "chapitre-1", ...data })),
+      update: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: "chapitre-1", ...data })),
     },
     lecon: {
       aggregate: vi.fn().mockResolvedValue({ _max: { ordre: null } }),
       findUnique: vi.fn().mockResolvedValue(null),
       findFirst: vi.fn().mockResolvedValue(null),
-      create: vi.fn(async ({ data }: { data: object }) => ({ id: "lecon-1", ...data })),
+      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: "lecon-1", ...data })),
       update: vi.fn().mockResolvedValue(undefined),
     },
   };
