@@ -8,36 +8,16 @@ import {
   NIVEAUX_SEED,
   seedAll,
 } from "../prisma/seed";
+import { viderBase } from "./helpers";
 
 const prisma = new PrismaClient();
-
-async function resetDatabase() {
-  await prisma.signalement.deleteMany();
-  await prisma.message.deleteMany();
-  await prisma.sujetForum.deleteMany();
-  await prisma.badgeUtilisateur.deleteMany();
-  await prisma.badge.deleteMany();
-  await prisma.progression.deleteMany();
-  await prisma.tentative.deleteMany();
-  await prisma.question.deleteMany();
-  await prisma.quiz.deleteMany();
-  await prisma.lecon.deleteMany();
-  await prisma.chapitre.deleteMany();
-  await prisma.paiement.deleteMany();
-  await prisma.abonnement.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.parentLink.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.matiere.deleteMany();
-  await prisma.niveau.deleteMany();
-}
 
 const CHAPITRES_ATTENDUS = NIVEAUX_SEED.length * MATIERES_SEED.length * CHAPITRES_PAR_MATIERE;
 const LECONS_ATTENDUES = CHAPITRES_ATTENDUS * LECONS_PAR_CHAPITRE;
 
 describe("reset + seed (e2e)", () => {
   beforeAll(async () => {
-    await resetDatabase();
+    await viderBase(prisma);
     await seedAll(prisma);
   });
 

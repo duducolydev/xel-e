@@ -1,4 +1,5 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient, Role, StatutCompte } from "@prisma/client";
+import { hasherMotDePasse } from "../src/auth/password";
 
 export const NIVEAUX_SEED = [
   { libelle: "6e", ordre: 1 },
@@ -12,9 +13,10 @@ export const MATIERES_SEED = ["Maths", "PC", "SVT"] as const;
 export const CHAPITRES_PAR_MATIERE = 2;
 export const LECONS_PAR_CHAPITRE = 3;
 
-// Les comptes de démo n'ont pas de mot de passe réel : le hash argon2 et
-// l'inscription arrivent en Phase 2 (Authentification).
-const PLACEHOLDER_PASSWORD_HASH = "seed-placeholder-hash";
+// Développement uniquement : ces comptes ne doivent jamais exister en production.
+export const MOT_DE_PASSE_DEMO = "XeleDemo2026";
+
+const CONFIRME_LE = new Date("2026-01-01T00:00:00Z");
 
 export const COMPTES_DEMO_SEED = [
   {
@@ -22,6 +24,8 @@ export const COMPTES_DEMO_SEED = [
     role: Role.ELEVE,
     nomComplet: "Fatou Élève Démo",
     pseudonyme: "fatou_demo",
+    naissanceMois: 1,
+    naissanceAnnee: 2010,
   },
   {
     email: "prof.demo@xele.sn",
@@ -119,15 +123,22 @@ export async function seedChapitresEtLecons(
   }
 }
 
-export async function seedComptesDemo(prisma: PrismaClient) {
+// Les comptes de démo sont remis dans un état connu à chaque seed (mot de passe, email confirmé, actif).
+export async function seedComptesDemo(prisma: PrismaClient, niveauEleveId: string) {
+  const etatConnu = {
+    motDePasseHash: await hasherMotDePasse(MOT_DE_PASSE_DEMO),
+    emailConfirmeLe: CONFIRME_LE,
+    statutCompte: StatutCompte.ACTIF,
+  };
   return Promise.all(
-    COMPTES_DEMO_SEED.map((compte) =>
-      prisma.user.upsert({
+    COMPTES_DEMO_SEED.map((compte) => {
+      const niveauId = compte.role === Role.ELEVE ? niveauEleveId : null;
+      return prisma.user.upsert({
         where: { email: compte.email },
-        update: {},
-        create: { ...compte, motDePasseHash: PLACEHOLDER_PASSWORD_HASH },
-      }),
-    ),
+        update: etatConnu,
+        create: { ...compte, ...etatConnu, niveauId },
+      });
+    }),
   );
 }
 
@@ -135,5 +146,7 @@ export async function seedAll(prisma: PrismaClient) {
   const niveaux = await seedNiveaux(prisma);
   const matieres = await seedMatieres(prisma);
   await seedChapitresEtLecons(prisma, niveaux, matieres);
-  await seedComptesDemo(prisma);
+  const troisieme = niveaux.find((niveau) => niveau.libelle === "3e") ?? niveaux[0];
+  if (!troisieme) throw new Error("Aucun niveau créé.");
+  await seedComptesDemo(prisma, troisieme.id);
 }

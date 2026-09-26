@@ -1,19 +1,11 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Inject, Injectable } from "@nestjs/common";
 import Redis from "ioredis";
+import { REDIS_CLIENT } from "../../redis/redis.module";
 import { Pinger } from "../pinger";
 
 @Injectable()
-export class RedisIndicator implements Pinger, OnModuleDestroy {
-  private readonly client: Redis;
-
-  constructor(config: ConfigService) {
-    this.client = new Redis(config.get<string>("REDIS_URL") ?? "redis://localhost:6379", {
-      connectTimeout: 2000,
-      maxRetriesPerRequest: 1,
-      lazyConnect: true,
-    });
-  }
+export class RedisIndicator implements Pinger {
+  constructor(@Inject(REDIS_CLIENT) private readonly client: Redis) {}
 
   async ping(): Promise<boolean> {
     try {
@@ -22,9 +14,5 @@ export class RedisIndicator implements Pinger, OnModuleDestroy {
     } catch {
       return false;
     }
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    this.client.disconnect();
   }
 }

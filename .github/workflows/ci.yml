@@ -65,10 +65,26 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      mailhog:
+        image: mailhog/mailhog:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
+        options: >-
+          --health-cmd "wget --spider -q http://localhost:8025 || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgresql://xele:xele@localhost:5433/xele
       REDIS_URL: redis://localhost:6379
       API_PORT: 3001
+      APP_URL: http://localhost:3010
+      JWT_SECRET: ci-only-jwt-secret-not-for-prod
+      JWT_REFRESH_SECRET: ci-only-refresh-secret-not-for-prod
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      MAILHOG_API_URL: http://localhost:8025
     steps:
       - uses: actions/checkout@v4
 

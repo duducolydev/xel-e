@@ -83,3 +83,81 @@ développement par le conteneur Docker `sigark-api` d'un autre projet, sans lien
 machine sans conflit, `3000` conviendrait aussi bien.
 
 **Date** : 2026-08-28 — Phase 1.
+
+---
+
+## D0006 — Règles d'inscription et de conformité des mineurs
+
+**Contexte** : le brief (Phase 2) laissait plusieurs points ouverts. Tranchés par le porteur du
+projet le 2026-09-26.
+
+**Décisions** :
+
+1. **Âge** : l'élève renseigne son **mois et son année** de naissance (pas le jour). Sans le jour,
+   l'anniversaire n'est compté qu'une fois le mois de naissance passé : l'âge n'est jamais
+   surestimé. L'âge est recalculé à chaque requête, donc un élève qui atteint 15 ans n'a plus besoin
+   d'accord parental sans action de sa part. Un élève dont l'âge est inconnu est traité comme ayant
+   moins de 15 ans. Âge minimum d'inscription : 8 ans (garde-fou contre les erreurs de saisie).
+2. **Confirmation d'email non bloquante** : la connexion et les cours sont accessibles tout de
+   suite ; le **forum** reste fermé tant que l'email n'est pas confirmé (cohérent avec « il faut un
+   compte confirmé pour poster », Phase 7) et, pour les moins de 15 ans, tant que le parent n'a pas
+   donné son accord.
+3. **Professeur non validé** : connexion refusée (403, message explicite) jusqu'à validation par
+   un admin (`POST /admin/professeurs/:id/valider`, qui envoie un email au professeur).
+4. **Mot de passe oublié sans email** : le lien part vers l'email du parent s'il est connu (cas des
+   moins de 15 ans), sinon l'élève doit passer par son professeur ou l'administration. La réponse de
+   l'API est identique dans tous les cas (pas d'énumération des comptes).
+
+Minimisation : l'email du parent n'est conservé que s'il est requis (moins de 15 ans) ; il est ignoré
+sinon.
+
+**Date** : 2026-09-26 — Phase 2.
+
+---
+
+## D0007 — Sessions : cookies httpOnly derrière le proxy Next.js
+
+**Contexte** : le brief impose un refresh token rotatif en cookie httpOnly, sans préciser où vit le
+JWT d'accès, ni comment le front (Next.js, rendu serveur) et l'API (autre port / sous-domaine)
+partagent la session.
+
+**Décision** :
+- Le navigateur ne parle qu'au front : `next.config.ts` réécrit `/api/*` vers l'API. Les cookies
+  sont donc first-party, sans CORS ni `SameSite=None`.
+- Le JWT d'accès **et** le refresh token sont tous deux en cookies `httpOnly`, `SameSite=Lax`,
+  `Secure` en production. Aucun jeton n'est lisible en JavaScript (pas de `localStorage`).
+- Le middleware Next.js renouvelle la session avant le rendu des pages protégées quand le cookie
+  d'accès a disparu ; `envoyer()` côté client rejoue une fois une requête après un 401.
+- Le cookie d'accès expire un peu avant le JWT (30 s en production) : le rafraîchissement a lieu
+  pendant que le JWT est encore valide, jamais au milieu d'un rendu.
+- CSRF : couvert par `SameSite=Lax` et une API qui n'accepte que du JSON en `POST`.
+
+**Date** : 2026-09-26 — Phase 2.
+
+---
+
+## D0008 — Rotation des refresh tokens et détection de réutilisation
+
+**Décision** : chaque rafraîchissement révoque le jeton présenté et en émet un nouveau dans la même
+« famille ». Présenter un jeton déjà remplacé révoque **toute la famille** (vol probable), sauf dans
+les 30 secondes suivant sa rotation **et** si la famille est toujours active : deux onglets ou deux
+requêtes parallèles présentent légitimement le même jeton. Un jeton révoqué par déconnexion ou par
+changement de mot de passe n'est jamais accepté, même dans cette fenêtre. Les jetons (refresh et
+liens email) sont stockés hachés en HMAC-SHA256 avec `JWT_REFRESH_SECRET`.
+
+**Date** : 2026-09-26 — Phase 2.
+
+---
+
+## D0009 — Rate limiting : échecs de connexion stricts, limites par IP larges
+
+**Décision** :
+- Connexion : 5 échecs par couple (IP, identifiant) sur 15 min ; la 6e tentative reçoit un 429, même
+  avec le bon mot de passe. Une connexion réussie remet le compteur à zéro.
+- Limites par IP sur les autres routes d'authentification (inscription 50/h, mot de passe oublié
+  20/15 min, connexion 100/15 min) volontairement **larges** : dans un établissement, toute une
+  classe peut sortir par une seule IP publique.
+- Si Redis est indisponible, les limiteurs laissent passer (et journalisent) plutôt que de bloquer
+  toutes les connexions.
+
+**Date** : 2026-09-26 — Phase 2.

@@ -48,6 +48,17 @@ enum StatutPaiement {
   ECHOUE
 }
 
+enum StatutCompte {
+  ACTIF
+  EN_ATTENTE_VALIDATION
+}
+
+enum TypeJetonVerification {
+  CONFIRMATION_EMAIL
+  REINITIALISATION_MOT_DE_PASSE
+  CONSENTEMENT_PARENTAL
+}
+
 // ---------------------------------------------------------------------------
 // Utilisateurs
 // ---------------------------------------------------------------------------
@@ -60,13 +71,23 @@ model User {
   role           Role
   nomComplet     String
   pseudonyme     String? @unique
+  statutCompte   StatutCompte @default(ACTIF)
+  emailConfirmeLe DateTime?
 
   niveauId String?
   niveau   Niveau? @relation(fields: [niveauId], references: [id])
 
+  naissanceMois          Int?
+  naissanceAnnee         Int?
+  contactParentEmail     String?
+  consentementParentalLe DateTime?
+
   deletedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  refreshTokens      RefreshToken[]
+  jetonsVerification JetonVerification[]
 
   enfants          ParentLink[]      @relation("ParentDeUser")
   parents          ParentLink[]      @relation("EnfantDeUser")
@@ -94,6 +115,34 @@ model ParentLink {
 
   @@unique([parentId, enfantId])
   @@index([enfantId])
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  familleId    String
+  tokenHash    String    @unique
+  expireLe     DateTime
+  revoqueLe    DateTime?
+  remplaceParId String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familleId])
+}
+
+model JetonVerification {
+  id        String                @id @default(uuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id])
+  type      TypeJetonVerification
+  tokenHash String                @unique
+  expireLe  DateTime
+  utiliseLe DateTime?
+  createdAt DateTime              @default(now())
+
+  @@index([userId, type])
 }
 
 // ---------------------------------------------------------------------------

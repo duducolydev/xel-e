@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     root: "./",
     include: ["test/**/*.e2e-spec.ts"],
+    setupFiles: ["test/setup-env.ts"],
     // Les specs e2e partagent une seule vraie base Postgres (certaines la
     // réinitialisent entièrement) : elles doivent s'exécuter en séquence,
     // jamais en parallèle entre fichiers.

@@ -6,34 +6,59 @@ import { afterAll, describe, expect, it } from "vitest";
 const apiRoot = join(__dirname, "..");
 const prisma = new PrismaClient();
 
-async function publicTableExists(name: string): Promise<boolean> {
-  const rows = await prisma.$queryRaw<{ exists: boolean }[]>`
-    SELECT EXISTS (
-      SELECT 1 FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_name = ${name}
-    ) AS "exists"
+async function instantaneSchema(): Promise<string> {
+  const colonnes = await prisma.$queryRaw`
+    SELECT table_name, column_name, data_type, is_nullable, column_default
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name <> '_prisma_migrations'
+    ORDER BY table_name, column_name
   `;
-  return rows[0]?.exists ?? false;
+  const enums = await prisma.$queryRaw`
+    SELECT t.typname, e.enumlabel
+    FROM pg_type t
+    JOIN pg_enum e ON e.enumtypid = t.oid
+    JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE n.nspname = 'public'
+    ORDER BY t.typname, e.enumsortorder
+  `;
+  const index = await prisma.$queryRaw`
+    SELECT indexname, indexdef FROM pg_indexes
+    WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'
+    ORDER BY indexname
+  `;
+  const contraintes = await prisma.$queryRaw`
+    SELECT conname, pg_get_constraintdef(c.oid) AS definition
+    FROM pg_constraint c
+    JOIN pg_namespace n ON n.oid = c.connamespace
+    WHERE n.nspname = 'public'
+    ORDER BY conname
+  `;
+  return JSON.stringify({ colonnes, enums, index, contraintes });
 }
 
-function runCli(command: string): void {
-  execSync(command, { cwd: apiRoot, stdio: "pipe" });
+function executer(commande: string): void {
+  execSync(commande, { cwd: apiRoot, stdio: "pipe", env: process.env });
 }
 
-describe("migration up puis down (e2e)", () => {
+describe("migration la plus récente : up puis down (e2e)", () => {
   afterAll(async () => {
     await prisma.$disconnect();
   });
 
-  it("la base revient à l'état antérieur sans erreur, puis remonte proprement", async () => {
-    await expect(publicTableExists("User")).resolves.toBe(true);
+  it("le down ramène exactement au schéma antérieur, et le up le reconstruit à l'identique", async () => {
+    const migre = await instantaneSchema();
 
-    expect(() => runCli("pnpm db:migrate:down")).not.toThrow();
-    await expect(publicTableExists("User")).resolves.toBe(false);
-    await expect(publicTableExists("_prisma_migrations")).resolves.toBe(false);
+    executer("pnpm db:migrate:down");
+    const avantDerniere = await instantaneSchema();
+    expect(avantDerniere).not.toBe(migre);
 
-    expect(() => runCli("pnpm db:migrate:deploy")).not.toThrow();
-    await expect(publicTableExists("User")).resolves.toBe(true);
-    await expect(prisma.user.count()).resolves.toBe(0);
+    executer("pnpm db:migrate:deploy");
+    expect(await instantaneSchema()).toBe(migre);
+
+    executer("pnpm db:migrate:down");
+    expect(await instantaneSchema()).toBe(avantDerniere);
+
+    executer("pnpm db:migrate:deploy");
+    expect(await instantaneSchema()).toBe(migre);
   });
 });

@@ -87,3 +87,54 @@ attendus (vérifié directement en base) ; `GET /health` renvoie `{"status":"ok"
 **Dette éventuelle** :
 - Les mots de passe des comptes de démo sont un hash placeholder (`PLACEHOLDER_PASSWORD_HASH`) — le
   hachage argon2 réel arrive avec l'inscription/connexion en Phase 2.
+
+---
+
+## Phase 2 — Authentification, rôles et conformité mineurs
+
+**Fait** :
+- Migration `20260926133934_auth` (réversible, `down.sql` testé) : statut de compte, confirmation
+  d'email, mois/année de naissance, contact et accord parental sur `User` ; tables `RefreshToken`
+  (familles pour la rotation) et `JetonVerification` (confirmation d'email, reset, accord parental).
+- Inscription élève (email **ou** identifiant, classe, mois/année de naissance), professeur (en
+  attente de validation admin) et parent. Élève de moins de 15 ans : email d'un parent obligatoire,
+  demande d'accord envoyée par email, forum fermé tant que l'accord n'est pas donné.
+- Connexion par email ou identifiant, hash **argon2id** (`@node-rs/argon2`), JWT d'accès 15 min et
+  refresh token rotatif 30 jours, tous deux en cookies `httpOnly` ; déconnexion ; mot de passe
+  oublié / réinitialisation par email (lien 1 h, toutes les sessions coupées après changement).
+- Guards globaux : tout est protégé par défaut, `@Public()` pour ouvrir, `@Roles(...)` pour
+  restreindre, `@CurrentUser()` pour l'utilisateur courant. Endpoints admin de validation des profs.
+- Rate limiting Redis : 5 échecs de connexion par (IP, identifiant) puis 429 ; limites par IP larges
+  sur les autres routes d'auth.
+- Emails (SMTP, mailhog en dev) : confirmation, accord parental, réinitialisation, compte prof validé.
+- Config de l'API validée par zod au démarrage (l'API refuse de démarrer sans `JWT_SECRET`, etc.).
+- Front : proxy `/api` → API, middleware de rafraîchissement transparent de la session, pages
+  inscription, connexion, mot de passe oublié/réinitialisation, confirmation d'email, accord
+  parental, tableau de bord et administration ; erreurs en français, champ par champ.
+- Seed : les comptes de démo ont un vrai mot de passe (`XeleDemo2026`, **dev uniquement**) et un
+  email confirmé ; relancer `pnpm seed` suffit à mettre à jour une base existante.
+- `DOCS/acces.md` : matrice rôle × ressource, rejouée par les tests.
+
+**Décisions** : `DOCS/decisions.md` D0006 à D0009 — règles des mineurs (validées), sessions en cookies
+derrière le proxy Next, rotation avec détection de réutilisation, rate limiting.
+
+**Tests** :
+- Unitaires (API) : hash/vérification argon2 ; émission, rotation, détection de réutilisation et
+  invalidation des refresh tokens ; `AuthService` (inscription mineurs/majeurs, connexion, prof en
+  attente, reset vers l'élève ou le parent) ; guards sur des routes factices (401/403/200) ; règle
+  mineur `accesForum` ; jetons de vérification (usage unique, expiration, type) ; limiteur.
+- Unitaires (shared) : calcul d'âge au mois près.
+- e2e API (Supertest, vraie base + mailhog) : parcours élève avec email de confirmation, élève de
+  moins de 15 ans avec accord parental, prof validé par l'admin, rotation et déconnexion, reset,
+  6 échecs ⇒ 429, matrice d'accès complète, réversibilité de la dernière migration (instantané du
+  schéma avant/après).
+- e2e Playwright : inscription → email (mailhog) → confirmation → connexion → tableau de bord ;
+  élève refusé sur `/admin` (403 API + redirection) ; session qui continue après expiration de
+  l'accès (rotation observée) ; déconnexion ; champ parent affiché sous 15 ans.
+
+**Dette éventuelle** :
+- Pas de renvoi de l'email de confirmation ou de la demande d'accord parental depuis l'interface
+  (si l'email s'est perdu, il faut pour l'instant passer par l'administration).
+- Pas encore d'interface pour qu'un admin réinitialise le mot de passe d'un élève sans email.
+- Importer `@xel-e/shared` côté client embarque zod dans la page d'inscription (~15 Ko gzip) ; à
+  surveiller avec le budget performance de la Phase 11.
