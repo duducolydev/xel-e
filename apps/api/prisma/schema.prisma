@@ -100,6 +100,7 @@ model User {
   abonnements      Abonnement[]
   notifications    Notification[]
   leconsRedigees   Lecon[]
+  versionsPubliees VersionLecon[]    @relation("VersionsPubliees")
 
   @@index([role])
   @@index([niveauId])
@@ -189,13 +190,19 @@ model Lecon {
   id          String      @id @default(uuid())
   chapitreId  String
   chapitre    Chapitre    @relation(fields: [chapitreId], references: [id])
+  slug        String      @unique
   titre       String
   contenu     String?
   statut      StatutLecon @default(BROUILLON)
-  version     Int         @default(1)
+  // Numéro de la dernière version publiée (0 = jamais publiée).
+  version     Int         @default(0)
   ordre       Int
   auteurId    String?
   auteur      User?       @relation(fields: [auteurId], references: [id])
+
+  versionPublieeId String?       @unique
+  versionPubliee   VersionLecon? @relation("VersionPubliee", fields: [versionPublieeId], references: [id])
+  versions         VersionLecon[] @relation("VersionsLecon")
 
   deletedAt DateTime?
   createdAt DateTime  @default(now())
@@ -206,6 +213,25 @@ model Lecon {
 
   @@unique([chapitreId, ordre])
   @@index([statut])
+}
+
+// Instantané figé d'une leçon au moment de sa publication (un trigger SQL interdit toute mise à jour).
+model VersionLecon {
+  id          String   @id @default(uuid())
+  leconId     String
+  lecon       Lecon    @relation("VersionsLecon", fields: [leconId], references: [id])
+  numero      Int
+  titre       String
+  contenu     String
+  sections    Json
+  resume      String
+  publieLe    DateTime @default(now())
+  publieParId String?
+  publiePar   User?    @relation("VersionsPubliees", fields: [publieParId], references: [id])
+
+  publieeSur Lecon? @relation("VersionPubliee")
+
+  @@unique([leconId, numero])
 }
 
 // ---------------------------------------------------------------------------

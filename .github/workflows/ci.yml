@@ -83,6 +83,10 @@ jobs:
       SMTP_HOST: localhost
       SMTP_PORT: 1025
       MAILHOG_API_URL: http://localhost:8025
+      S3_ENDPOINT: http://localhost:9000
+      S3_BUCKET: xele
+      S3_ACCESS_KEY: xele
+      S3_SECRET_KEY: xele12345
     steps:
       - uses: actions/checkout@v4
 
@@ -98,6 +102,12 @@ jobs:
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
+
+      # MinIO exige la commande « server /data », impossible à passer à un conteneur de service.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=xele -e MINIO_ROOT_PASSWORD=xele12345 minio/minio server /data
+          timeout 60 bash -c "until curl -sf http://localhost:9000/minio/health/live; do sleep 1; done"
 
       - name: Apply database migrations
         run: pnpm --filter @xel-e/api exec prisma migrate deploy

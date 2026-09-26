@@ -1,5 +1,10 @@
-import { PrismaClient, Role, StatutCompte } from "@prisma/client";
+import { Prisma, PrismaClient, Role, StatutCompte, StatutLecon } from "@prisma/client";
+import { INFOS_MATIERES, type Matiere } from "@xel-e/shared";
 import { hasherMotDePasse } from "../src/auth/password";
+import { rendreLecon } from "../src/contenus/rendu-markdown";
+import { CHAPITRE_DEMO, contenuGenerique, LECON_DEMO } from "./contenus-demo";
+
+export { LECON_DEMO };
 
 export const NIVEAUX_SEED = [
   { libelle: "6e", ordre: 1 },
@@ -71,14 +76,23 @@ export async function seedMatieres(prisma: PrismaClient) {
   );
 }
 
+interface Reference {
+  id: string;
+  libelle: string;
+}
+
 export async function seedChapitresEtLecons(
   prisma: PrismaClient,
-  niveaux: { id: string }[],
-  matieres: { id: string }[],
+  niveaux: Reference[],
+  matieres: Reference[],
 ) {
   for (const niveau of niveaux) {
     for (const matiere of matieres) {
+      const info = INFOS_MATIERES[matiere.libelle as Matiere];
       for (let c = 1; c <= CHAPITRES_PAR_MATIERE; c += 1) {
+        const estChapitreDemo =
+          niveau.libelle === CHAPITRE_DEMO.niveau && matiere.libelle === CHAPITRE_DEMO.matiere && c === CHAPITRE_DEMO.ordre;
+        const titreChapitre = estChapitreDemo ? CHAPITRE_DEMO.titre : `Chapitre ${c}`;
         const chapitre = await prisma.chapitre.upsert({
           where: {
             niveauId_matiereId_ordre: {
@@ -92,11 +106,16 @@ export async function seedChapitresEtLecons(
             niveauId: niveau.id,
             matiereId: matiere.id,
             ordre: c,
-            titre: `Chapitre ${c}`,
+            titre: titreChapitre,
           },
         });
 
         for (let l = 1; l <= LECONS_PAR_CHAPITRE; l += 1) {
+          const estLeconDemo = estChapitreDemo && l === LECON_DEMO.ordre;
+          const titre = estLeconDemo ? LECON_DEMO.titre : `Leçon ${l}`;
+          const slug = estLeconDemo
+            ? LECON_DEMO.slug
+            : `${niveau.libelle}-${info.slug}-chapitre-${c}-lecon-${l}`;
           const lecon = await prisma.lecon.upsert({
             where: {
               chapitreId_ordre: {
@@ -108,7 +127,9 @@ export async function seedChapitresEtLecons(
             create: {
               chapitreId: chapitre.id,
               ordre: l,
-              titre: `Leçon ${l}`,
+              titre,
+              slug,
+              contenu: estLeconDemo ? LECON_DEMO.contenu : contenuGenerique(titre, titreChapitre, info.nom),
             },
           });
 
@@ -142,11 +163,37 @@ export async function seedComptesDemo(prisma: PrismaClient, niveauEleveId: strin
   );
 }
 
+// Publie (version 1) les leçons de démo jamais publiées ; relancer le seed ne crée aucune version.
+export async function seedPublication(prisma: PrismaClient, publieParId: string | null) {
+  const aPublier = await prisma.lecon.findMany({ where: { version: 0, deletedAt: null } });
+  for (const lecon of aPublier) {
+    const contenu = lecon.contenu ?? "";
+    const rendu = rendreLecon(contenu);
+    const version = await prisma.versionLecon.create({
+      data: {
+        leconId: lecon.id,
+        numero: 1,
+        titre: lecon.titre,
+        contenu,
+        sections: rendu.sections as unknown as Prisma.InputJsonValue,
+        resume: rendu.resume,
+        publieParId,
+      },
+    });
+    await prisma.lecon.update({
+      where: { id: lecon.id },
+      data: { statut: StatutLecon.PUBLIE, version: 1, versionPublieeId: version.id },
+    });
+  }
+}
+
 export async function seedAll(prisma: PrismaClient) {
   const niveaux = await seedNiveaux(prisma);
   const matieres = await seedMatieres(prisma);
   await seedChapitresEtLecons(prisma, niveaux, matieres);
   const troisieme = niveaux.find((niveau) => niveau.libelle === "3e") ?? niveaux[0];
   if (!troisieme) throw new Error("Aucun niveau créé.");
-  await seedComptesDemo(prisma, troisieme.id);
+  const comptes = await seedComptesDemo(prisma, troisieme.id);
+  const admin = comptes.find((compte) => compte.role === Role.ADMIN);
+  await seedPublication(prisma, admin?.id ?? null);
 }

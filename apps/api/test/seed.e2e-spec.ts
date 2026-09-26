@@ -32,6 +32,7 @@ describe("reset + seed (e2e)", () => {
     await expect(prisma.lecon.count()).resolves.toBe(LECONS_ATTENDUES);
     await expect(prisma.quiz.count()).resolves.toBe(LECONS_ATTENDUES);
     await expect(prisma.user.count()).resolves.toBe(COMPTES_DEMO_SEED.length);
+    await expect(prisma.versionLecon.count()).resolves.toBe(LECONS_ATTENDUES);
   });
 
   it("ne duplique rien si le seed est relancé", async () => {
@@ -41,5 +42,6 @@ describe("reset + seed (e2e)", () => {
     await expect(prisma.chapitre.count()).resolves.toBe(CHAPITRES_ATTENDUS);
     await expect(prisma.lecon.count()).resolves.toBe(LECONS_ATTENDUES);
     await expect(prisma.user.count()).resolves.toBe(COMPTES_DEMO_SEED.length);
+    await expect(prisma.versionLecon.count()).resolves.toBe(LECONS_ATTENDUES);
   });
 });

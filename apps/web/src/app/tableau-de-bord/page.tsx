@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EnteteConnecte } from "@/components/entete-connecte";
 import { Alerte } from "@/components/ui";
@@ -43,7 +44,17 @@ export default async function PageTableauDeBord({
         <section className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900">Mes cours</h2>
-            <p className="mt-1 text-sm text-gray-600">Les cours arrivent très bientôt sur Xel-E.</p>
+            <p className="mt-1 text-sm text-gray-600">
+              {utilisateur.niveau
+                ? `Les leçons de Maths, PC et SVT de la classe de ${utilisateur.niveau}.`
+                : "Les leçons de Maths, PC et SVT, de la 6e à la 3e."}
+            </p>
+            <Link
+              href={utilisateur.niveau ? `/cours/${utilisateur.niveau}` : "/cours"}
+              className="mt-3 inline-block font-semibold text-brand-dark underline underline-offset-4"
+            >
+              Voir les cours
+            </Link>
           </div>
           <div className="rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900">Forum d&apos;entraide</h2>

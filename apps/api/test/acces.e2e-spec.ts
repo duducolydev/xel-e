@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { MOT_DE_PASSE_DEMO, seedAll } from "../prisma/seed";
+import { LECON_DEMO, MOT_DE_PASSE_DEMO, seedAll } from "../prisma/seed";
 import { connecter, creerApp, viderBase, viderLimiteurs } from "./helpers";
 
 // Doit rester identique à la matrice de DOCS/acces.md.
@@ -42,6 +42,41 @@ const MATRICE: Ligne[] = [
     methode: "post",
     chemin: `/admin/professeurs/${randomUUID()}/valider`,
     attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 404 },
+  },
+  {
+    methode: "get",
+    chemin: "/catalogue",
+    attendu: { anonyme: 200, ELEVE: 200, PROFESSEUR: 200, PARENT: 200, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: "/catalogue/4e/maths",
+    attendu: { anonyme: 200, ELEVE: 200, PROFESSEUR: 200, PARENT: 200, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: `/lecons/${LECON_DEMO.slug}`,
+    attendu: { anonyme: 200, ELEVE: 200, PROFESSEUR: 200, PARENT: 200, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: "/admin/chapitres?niveau=4e&matiere=Maths",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "post",
+    chemin: "/admin/lecons",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 400 },
+  },
+  {
+    methode: "post",
+    chemin: `/admin/lecons/${randomUUID()}/publier`,
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 404 },
+  },
+  {
+    methode: "post",
+    chemin: "/admin/medias",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 400 },
   },
 ];
 

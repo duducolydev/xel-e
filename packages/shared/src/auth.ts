@@ -100,6 +100,7 @@ export interface UtilisateurCourant {
   role: "ELEVE" | "PROFESSEUR" | "PARENT" | "ADMIN";
   email: string | null;
   identifiant: string | null;
+  niveau: string | null;
   emailConfirme: boolean;
   consentementParentalRequis: boolean;
   consentementParentalDonne: boolean;

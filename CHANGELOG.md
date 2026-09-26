@@ -138,3 +138,59 @@ derrière le proxy Next, rotation avec détection de réutilisation, rate limiti
 - Pas encore d'interface pour qu'un admin réinitialise le mot de passe d'un élève sans email.
 - Importer `@xel-e/shared` côté client embarque zod dans la page d'inscription (~15 Ko gzip) ; à
   surveiller avec le budget performance de la Phase 11.
+
+---
+
+## Phase 3 — Contenus pédagogiques (lecture)
+
+**Fait** :
+- Migration `20260926144107_contenus` (réversible, `down.sql` testé) : `slug` des leçons (rempli
+  pour les leçons existantes avant d'être rendu obligatoire), table `VersionLecon` et pointeur vers
+  la version en ligne ; un trigger PostgreSQL interdit toute modification d'une version publiée.
+- Circuit de publication (API admin) : chapitres et leçons (création, édition, suppression
+  douce), brouillon → en revue → publiée, renvoi en brouillon ; publier fige une nouvelle version,
+  modifier une leçon publiée ne touche pas la version en ligne jusqu'à la suivante. Aperçu du rendu
+  d'un brouillon pour l'admin.
+- Rendu Markdown côté API, calculé une fois à la publication : sections découpées sur les titres
+  `##`, formules KaTeX, liste blanche HTML stricte, images limitées à nos médias.
+- Lecture publique (sans compte) : catalogue par niveau/matière, leçon publiée avec voisines,
+  plan du site. Les brouillons renvoient 404 partout, y compris au front.
+- Médias : téléversement d'images par l'admin (PNG, JPEG, GIF, WebP, 2 Mo max ; type vérifié sur
+  les octets, SVG refusé), stockage S3/MinIO, nom = empreinte SHA-256, cache navigateur permanent.
+- PDF d'une leçon : rendu par Chromium à partir d'un gabarit autonome (formules et images
+  intégrées), généré au premier téléchargement puis mis en cache par version.
+- Front : `/cours` → niveau → matière (chapitres) → leçon paginée par sections (`?section=N`), fil
+  d'Ariane, sommaire, bouton PDF ; métadonnées OpenGraph, URL canonique, données structurées
+  (`BreadcrumbList`, `LearningResource`), `sitemap.xml`, `robots.txt`, page 404 en français. Le
+  tableau de bord mène l'élève directement aux cours de sa classe.
+- Seed : les 72 leçons de démo sont publiées ; une vraie leçon de démonstration (« Le théorème de
+  Pythagore », 4e) avec sections, formules et tableau.
+- CI : MinIO démarré pour le job e2e.
+
+**Décisions** : `DOCS/decisions.md` D0010 à D0013 — Markdown assaini plutôt que MDX (qui
+exécuterait du code venu de la base), versions immuables, leçons publiées publiques et pagination
+par sections, PDF par Chromium mis en cache par version.
+
+**Tests** :
+- Unitaires : conversion Markdown → HTML face à 15 charges XSS (vérifiées en analysant le HTML
+  produit, avec un contrôle que le détecteur repère bien une vraie faille) ; découpage en sections ;
+  machine à états (seule une leçon EN_REVUE passe PUBLIE) ; publication qui crée une version figée
+  et laisse l'ancienne intacte, y compris sous publication concurrente ; politique d'accès
+  (brouillons invisibles hors admin) ; catalogue ; export PDF (cache, images, échappement) ; médias.
+- e2e API : circuit complet création → 404 en brouillon → publication → visible → modification
+  sans effet avant republication → version 2 ; immuabilité vérifiée contre la vraie base ; PDF
+  valide (`application/pdf`, `%PDF-`, taille > 0) ; médias ; matrice d'accès étendue à 55 cas.
+- e2e Playwright : un admin publie une leçon → l'élève la trouve depuis son tableau de bord, l'ouvre
+  et la pagine ; téléchargement du PDF ; brouillon ⇒ 404 ; métadonnées SEO et sitemap.
+
+**Validation** : Lighthouse sur le build de production (mobile) — page leçon, page matière et
+catalogue : SEO 100, accessibilité 100, bonnes pratiques 100, performance 96–97.
+
+**Dette éventuelle** :
+- Pas encore d'interface d'édition des contenus : l'admin passe par l'API (le studio d'édition est
+  l'objet de la Phase 6).
+- Les pages de cours sont rendues à chaque requête (`force-dynamic`) ; une mise en cache avec
+  invalidation à la publication sera à étudier avec le budget performance de la Phase 11.
+- L'image Docker de production de l'API devra embarquer Chromium pour les PDF (Phase 13).
+- Une base de développement existante garde des slugs `lecon-<id>` pour les leçons de démo :
+  `pnpm --filter @xel-e/api db:migrate:reset` la remet à neuf avec les slugs lisibles.

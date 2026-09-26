@@ -3,6 +3,8 @@
 @theme {
   --color-brand-dark: #0e4478;
   --color-brand: #3a8bdb;
+  /* Variante lisible pour le petit texte sur fond blanc (contraste ≥ 4,5:1). */
+  --color-brand-texte: #1d64ad;
   --color-brand-light: #aecdf0;
   --color-brand-wash: #eef5fc;
 }
@@ -17,3 +19,33 @@ body {
   background: #ffffff;
   color: #1f2937;
 }
+
+/* Contenu des leçons (HTML déjà assaini par l'API). */
+.contenu-lecon {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: #1f2937;
+}
+.contenu-lecon > * + * { margin-top: 1rem; }
+.contenu-lecon h3 { font-size: 1.125rem; font-weight: 700; color: var(--color-brand-dark); margin-top: 1.75rem; }
+.contenu-lecon h4, .contenu-lecon h5, .contenu-lecon h6 { font-weight: 600; margin-top: 1.25rem; }
+.contenu-lecon a { color: var(--color-brand-dark); text-decoration: underline; text-underline-offset: 3px; }
+.contenu-lecon ul { list-style: disc; padding-left: 1.5rem; }
+.contenu-lecon ol { list-style: decimal; padding-left: 1.5rem; }
+.contenu-lecon li + li { margin-top: 0.25rem; }
+.contenu-lecon strong { font-weight: 700; color: #111827; }
+.contenu-lecon blockquote {
+  border-left: 4px solid var(--color-brand);
+  background: var(--color-brand-wash);
+  padding: 0.75rem 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+.contenu-lecon code { background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.9em; }
+.contenu-lecon pre { background: #f3f4f6; padding: 0.75rem 1rem; border-radius: 0.5rem; overflow-x: auto; }
+.contenu-lecon pre code { background: none; padding: 0; }
+.contenu-lecon img { max-width: 100%; height: auto; border-radius: 0.5rem; }
+.contenu-lecon table { display: block; overflow-x: auto; border-collapse: collapse; }
+.contenu-lecon th, .contenu-lecon td { border: 1px solid #d1d5db; padding: 0.5rem 0.75rem; }
+.contenu-lecon th { background: var(--color-brand-wash); text-align: left; }
+/* Une formule longue défile au lieu de faire déborder la page sur mobile. */
+.contenu-lecon .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.25rem 0; }

@@ -24,6 +24,9 @@ export default function HomePage() {
           Se connecter
         </Link>
       </div>
+      <Link href="/cours" className="font-semibold text-brand-dark underline underline-offset-4">
+        Découvrir les cours
+      </Link>
     </main>
   );
 }

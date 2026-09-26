@@ -15,6 +15,7 @@ export async function viderBase(prisma: PrismaClient): Promise<void> {
   await prisma.tentative.deleteMany();
   await prisma.question.deleteMany();
   await prisma.quiz.deleteMany();
+  await prisma.versionLecon.deleteMany();
   await prisma.lecon.deleteMany();
   await prisma.chapitre.deleteMany();
   await prisma.paiement.deleteMany();

@@ -161,3 +161,64 @@ liens email) sont stockés hachés en HMAC-SHA256 avec `JWT_REFRESH_SECRET`.
   toutes les connexions.
 
 **Date** : 2026-09-26 — Phase 2.
+
+---
+
+## D0010 — Contenu des leçons : Markdown assaini, pas de MDX
+
+**Contexte** : le brief parle de « Markdown/MDX stocké en BD ». Or le MDX se compile en JavaScript :
+afficher du MDX venu de la base reviendrait à exécuter du code écrit par un rédacteur (professeur
+en Phase 6), soit une faille XSS/RCE par construction.
+
+**Décision** : les leçons sont en **Markdown** (tableaux, listes, citations, code) avec formules
+`$…$` et `$$…$$`. Le rendu se fait côté API, en trois temps : `markdown-it` sans HTML brut → chaque
+formule devient un marqueur neutre → `sanitize-html` avec liste blanche stricte → les marqueurs sont
+remplacés par le rendu KaTeX (`trust: false`, qui refuse `\href`, `\url`…). Les images ne sont
+acceptées que depuis nos propres médias (`/api/medias/…`), chargées en différé. Le HTML est calculé
+**une fois, à la publication**, et stocké dans la version.
+
+**Date** : 2026-09-26 — Phase 3.
+
+---
+
+## D0011 — Versionnage : copie de travail + versions publiées immuables
+
+**Décision** : une `Lecon` porte la copie de travail (titre, Markdown, statut) ; chaque publication
+crée une `VersionLecon` figée (titre, source, sections rendues, résumé, auteur de la publication) et
+la leçon pointe vers sa version en ligne. Modifier une leçon publiée la repasse en brouillon **sans**
+toucher la version en ligne : les élèves continuent de lire la version publiée jusqu'à la suivante.
+Transitions : brouillon → en revue → publiée ; en revue → brouillon ; publiée → brouillon (par une
+modification). Une leçon en revue est verrouillée. L'immuabilité est garantie par la base elle-même
+(trigger qui refuse tout `UPDATE` sur `VersionLecon`), pas seulement par le code.
+
+**Date** : 2026-09-26 — Phase 3.
+
+---
+
+## D0012 — Leçons publiées publiques, pagination par sections
+
+**Décision** :
+- Les leçons **publiées** sont lisibles **sans compte** : c'est la condition du référencement exigé
+  par le brief (rendu serveur, sitemap) et du modèle freemium (« contenu de base gratuit »). Le
+  contenu premium (examens blancs) sera verrouillé en Phase 9–10.
+- Adresse : `/cours/{niveau}/{matière}/{slug}` ; le slug est fixé à la création (URL stable même si
+  le titre change). Une section = un titre de niveau 2 (`##`) ; `?section=N` pour les suivantes.
+
+**Date** : 2026-09-26 — Phase 3.
+
+---
+
+## D0013 — PDF par Chromium headless, généré une fois par version
+
+**Contexte** : il faut un PDF fidèle, formules KaTeX comprises ; les bibliothèques PDF « pures »
+ne savent pas rendre KaTeX.
+
+**Décision** : l'API génère le PDF avec Chromium (`playwright-core`, même version que les tests),
+à partir d'un gabarit HTML autonome (CSS et polices KaTeX intégrés, images de la leçon en data URI :
+aucun accès réseau pendant le rendu). Le PDF est généré au premier téléchargement puis mis en cache
+dans S3 sous l'identifiant de la version : une version étant immuable, son PDF l'est aussi.
+
+**Conséquence** : l'image Docker de production de l'API devra embarquer Chromium
+(`playwright install --with-deps chromium`, Phase 13).
+
+**Date** : 2026-09-26 — Phase 3.

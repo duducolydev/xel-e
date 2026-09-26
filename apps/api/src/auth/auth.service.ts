@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Prisma, type User } from "@prisma/client";
+import { Prisma, type Niveau, type User } from "@prisma/client";
 import {
   calculerAge,
   exigeConsentementParental,
@@ -193,9 +193,9 @@ export class AuthService {
     return { id: user.id };
   }
 
-  private trouverParLogin(login: string): Promise<User | null> {
+  private trouverParLogin(login: string): Promise<(User & { niveau: Niveau | null }) | null> {
     const critere = login.includes("@") ? { email: login } : { identifiant: login };
-    return this.prisma.user.findFirst({ where: { ...critere, deletedAt: null } });
+    return this.prisma.user.findFirst({ where: { ...critere, deletedAt: null }, include: { niveau: true } });
   }
 
   private async ouvrirSession(user: User, familleId?: string): Promise<JetonsSession> {
@@ -286,18 +286,22 @@ export class AuthService {
   }
 
   async profil(userId: string): Promise<UtilisateurCourant> {
-    const user = await this.prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+      include: { niveau: true },
+    });
     if (!user) throw new NotFoundException("Compte introuvable.");
     return this.versUtilisateurCourant(user);
   }
 
-  versUtilisateurCourant(user: User, maintenant = new Date()): UtilisateurCourant {
+  versUtilisateurCourant(user: User & { niveau?: Niveau | null }, maintenant = new Date()): UtilisateurCourant {
     return {
       id: user.id,
       nomComplet: user.nomComplet,
       role: user.role,
       email: user.email,
       identifiant: user.identifiant,
+      niveau: user.niveau?.libelle ?? null,
       emailConfirme: user.emailConfirmeLe !== null,
       consentementParentalRequis: consentementParentalRequis(user, maintenant),
       consentementParentalDonne: user.consentementParentalLe !== null,

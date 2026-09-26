@@ -46,7 +46,7 @@ export default defineConfig({
       url: baseURL,
       reuseExistingServer: false,
       timeout: 180_000,
-      env: { API_URL: `http://127.0.0.1:${PORT_API}` },
+      env: { API_URL: `http://127.0.0.1:${PORT_API}`, APP_URL: baseURL },
     },
   ],
 });
