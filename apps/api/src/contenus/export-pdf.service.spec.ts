@@ -17,6 +17,7 @@ const lecon: LeconPubliee = {
   matiere: { libelle: "Maths", slug: "maths", nom: "Mathématiques" },
   chapitre: "Le triangle rectangle",
   sections: [{ titre: "Figure", html: `<p><img src="/api/medias/${IMAGE}" alt="triangle"></p>` }],
+  aUnQuiz: false,
   precedente: null,
   suivante: null,
 };

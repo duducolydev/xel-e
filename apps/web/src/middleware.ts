@@ -46,5 +46,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 }
 
 export const config = {
-  matcher: ["/tableau-de-bord/:path*", "/admin/:path*"],
+  matcher: [
+    "/tableau-de-bord/:path*",
+    "/admin/:path*",
+    "/cours/:niveau/:matiere/:slug/quiz",
+    "/quiz/:path*",
+    "/mes-quiz",
+  ],
 };

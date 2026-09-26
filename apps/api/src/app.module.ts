@@ -8,6 +8,7 @@ import { validateEnv } from "./config/env";
 import { HealthModule } from "./health/health.module";
 import { MailModule } from "./mail/mail.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { QuizModule } from "./quiz/quiz.controller";
 import { RedisModule } from "./redis/redis.module";
 
 @Module({
@@ -24,6 +25,7 @@ import { RedisModule } from "./redis/redis.module";
     AuthModule,
     AdminModule,
     ContenusModule,
+    QuizModule,
   ],
 })
 export class AppModule {}

@@ -5,6 +5,7 @@ import {
   COMPTES_DEMO_SEED,
   LECON_DEMO,
   LECONS_PAR_CHAPITRE,
+  QUIZ_DEMO,
   MATIERES_SEED,
   NIVEAUX_SEED,
   seedAll,
@@ -42,6 +43,7 @@ function createMockPrisma() {
   const quiz = makeUpsertModel((w) => (w as { leconId: string }).leconId);
   const user = makeUpsertModel((w) => (w as { email: string }).email);
   const versions: Record<string, unknown>[] = [];
+  const questions: Record<string, unknown>[] = [];
 
   // Comme en base, une leçon créée sans « version » est à 0 (jamais publiée).
   const lecons = () => [...lecon.store.values()];
@@ -64,10 +66,17 @@ function createMockPrisma() {
       }),
     },
     quiz: { upsert: quiz.upsert },
+    question: {
+      count: vi.fn(async ({ where }: { where: { quizId: string } }) => questions.filter((q) => q.quizId === where.quizId).length),
+      createMany: vi.fn(async ({ data }: { data: Record<string, unknown>[] }) => {
+        questions.push(...data);
+        return { count: data.length };
+      }),
+    },
     user: { upsert: user.upsert },
   } as unknown as PrismaClient;
 
-  const stores = { niveau, matiere, chapitre, lecon, quiz, user, versions };
+  const stores = { niveau, matiere, chapitre, lecon, quiz, user, versions, questions };
 
   return { prisma, stores };
 }
@@ -94,6 +103,16 @@ describe("seedAll", () => {
     expect(stores.quiz.store.size).toBe(attendus.quiz);
     expect(stores.user.store.size).toBe(attendus.users);
     expect(stores.versions).toHaveLength(attendus.lecons);
+    expect(stores.questions).toHaveLength((attendus.lecons - 1) * 3 + QUIZ_DEMO.length);
+  });
+
+  it("donne au quiz de démonstration un exemple de chaque type de question", async () => {
+    const { prisma, stores } = createMockPrisma();
+
+    await seedAll(prisma);
+
+    const types = new Set(stores.questions.filter((q) => QUIZ_DEMO.some((d) => d.enonce === q.enonce)).map((q) => q.type));
+    expect([...types].sort()).toEqual(["QCM", "REPONSE_COURTE", "VRAI_FAUX"]);
   });
 
   it("publie la leçon de démonstration avec ses sections rendues", async () => {
@@ -112,9 +131,11 @@ describe("seedAll", () => {
 
     await seedAll(prisma);
     const versionsApresPremierPassage = stores.versions.length;
+    const questionsApresPremierPassage = stores.questions.length;
     await seedAll(prisma);
 
     expect(stores.versions).toHaveLength(versionsApresPremierPassage);
+    expect(stores.questions).toHaveLength(questionsApresPremierPassage);
   });
 
   it("est idempotent : relancer le seed ne duplique rien", async () => {

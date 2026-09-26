@@ -194,3 +194,55 @@ catalogue : SEO 100, accessibilité 100, bonnes pratiques 100, performance 96–
 - L'image Docker de production de l'API devra embarquer Chromium pour les PDF (Phase 13).
 - Une base de développement existante garde des slugs `lecon-<id>` pour les leçons de démo :
   `pnpm --filter @xel-e/api db:migrate:reset` la remet à neuf avec les slugs lisibles.
+
+---
+
+## Phase 4 — Moteur de quiz et correction automatique
+
+**Fait** :
+- Migration `20260926151151_quiz` (réversible, `down.sql` testé) : explication par question ;
+  position de reprise, corrigé figé, points et verrou « une seule tentative en cours » par élève et
+  par quiz sur `Tentative`.
+- Types de questions : QCM à une ou plusieurs bonnes réponses, vrai/faux, réponse courte (casse,
+  accents, espaces, ponctuation finale et virgule décimale tolérés). Barème par question.
+- Déroulé : démarrage ou reprise d'une tentative, réponses enregistrées au fil de l'eau (et
+  position à chaque navigation), soumission finale, **correction côté serveur uniquement**, corrigé
+  détaillé par question (réponse donnée, bonne réponse, points, explication) figé dans la tentative.
+- Anti-triche : le quiz envoyé au navigateur est construit par liste blanche de champs, sans bonne
+  réponse ni explication ; les réponses mal formées sont refusées ; une tentative soumise n'accepte
+  plus rien ; la tentative d'un autre élève renvoie 404.
+- Front : quiz une question par écran, contrôles natifs (utilisable au clavier), focus déplacé sur
+  l'énoncé à chaque question, état d'enregistrement annoncé, confirmation s'il reste des questions
+  sans réponse ; écran de résultat avec score et corrigé ; page « Mes quiz » (historique, reprise
+  d'une tentative en cours) ; accès au quiz depuis la leçon et le tableau de bord.
+- Seed : le quiz « Le théorème de Pythagore » contient un exemple de chaque type de question (dont
+  un QCM à plusieurs réponses) pour la revue manuelle ; trois questions génériques pour les autres
+  leçons de démo.
+- Correctif de la Phase 3 (commit séparé sur sa branche) : typage d'un test qui faisait échouer
+  `pnpm typecheck`.
+
+**Décisions** : `DOCS/decisions.md` D0014 — QCM multiple noté proportionnellement avec pénalité
+(choix validé), normalisation des réponses courtes, tentatives illimitées avec une seule en cours,
+pas de minuteur avant la Phase 9.
+
+**Tests** :
+- Unitaires : notation (cas nominaux, aucune réponse, QCM multiple partiel, « Photosynthèse » =
+  « photosynthese », virgule décimale, arrondis) ; payload public sans aucun champ de correction, y
+  compris quand la base contient un choix mal formé ; reprise de tentative avec réponses conservées ;
+  validation des réponses ; soumission figée ; nouvelle tentative vierge ; cloisonnement entre élèves.
+- e2e API : quiz réel de démonstration de bout en bout (6/7 points = 85,7 %, statuts attendus),
+  reprise, 400 sur réponse mal formée, 409 après soumission, 404 pour un autre compte, historique ;
+  matrice d'accès étendue à 70 cas.
+- e2e Playwright : parcours élève complet (dont une réponse au clavier) jusqu'au score, au corrigé et
+  à l'historique ; onglet fermé en plein quiz puis rouvert ⇒ reprise à la même question avec les
+  réponses ; aucune bonne réponse dans le HTML de la page du quiz.
+
+**Validation** : revue visuelle du quiz de démonstration (questions, confirmation de fin, corrigé)
+sur mobile ; elle a fait corriger un énoncé qui répétait l'indication « plusieurs réponses » et la
+mise en page du corrigé sur petit écran. **Reste à faire** : relecture pédagogique du quiz « Le
+théorème de Pythagore » (4e, Maths) par le porteur du projet (fond des questions et explications).
+
+**Dette éventuelle** :
+- Pas encore d'interface ni d'API pour rédiger des quiz : ils viennent du seed ; le générateur de
+  quiz est prévu dans le studio professeur (Phase 6).
+- Les réponses saisies hors connexion ne sont pas mises en file : c'est l'objet de la Phase 11.

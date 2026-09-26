@@ -60,6 +60,21 @@ const MATRICE: Ligne[] = [
   },
   {
     methode: "get",
+    chemin: `/quiz/lecons/${LECON_DEMO.slug}`,
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 200, PARENT: 200, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: "/quiz/tentatives",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 200, PARENT: 200, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: `/quiz/tentatives/${randomUUID()}`,
+    attendu: { anonyme: 401, ELEVE: 404, PROFESSEUR: 404, PARENT: 404, ADMIN: 404 },
+  },
+  {
+    methode: "get",
     chemin: "/admin/chapitres?niveau=4e&matiere=Maths",
     attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
   },

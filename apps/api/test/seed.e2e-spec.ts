@@ -6,6 +6,7 @@ import {
   LECONS_PAR_CHAPITRE,
   MATIERES_SEED,
   NIVEAUX_SEED,
+  QUIZ_DEMO,
   seedAll,
 } from "../prisma/seed";
 import { viderBase } from "./helpers";
@@ -33,6 +34,7 @@ describe("reset + seed (e2e)", () => {
     await expect(prisma.quiz.count()).resolves.toBe(LECONS_ATTENDUES);
     await expect(prisma.user.count()).resolves.toBe(COMPTES_DEMO_SEED.length);
     await expect(prisma.versionLecon.count()).resolves.toBe(LECONS_ATTENDUES);
+    await expect(prisma.question.count()).resolves.toBe((LECONS_ATTENDUES - 1) * 3 + QUIZ_DEMO.length);
   });
 
   it("ne duplique rien si le seed est relancé", async () => {
@@ -43,5 +45,6 @@ describe("reset + seed (e2e)", () => {
     await expect(prisma.lecon.count()).resolves.toBe(LECONS_ATTENDUES);
     await expect(prisma.user.count()).resolves.toBe(COMPTES_DEMO_SEED.length);
     await expect(prisma.versionLecon.count()).resolves.toBe(LECONS_ATTENDUES);
+    await expect(prisma.question.count()).resolves.toBe((LECONS_ATTENDUES - 1) * 3 + QUIZ_DEMO.length);
   });
 });

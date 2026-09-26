@@ -127,6 +127,11 @@ export default async function PageLecon({
             <a href={`/api/lecons/${lecon.slug}/pdf`} download className="font-medium text-brand-dark underline">
               Télécharger le PDF
             </a>
+            {lecon.aUnQuiz ? (
+              <Link href={`${chemin}/quiz`} className="font-medium text-brand-dark underline">
+                Faire le quiz
+              </Link>
+            ) : null}
           </div>
         </header>
 
@@ -160,6 +165,19 @@ export default async function PageLecon({
           </h2>
           <div className="contenu-lecon" dangerouslySetInnerHTML={{ __html: section?.html ?? "" }} />
         </article>
+
+        {lecon.aUnQuiz && numero === total ? (
+          <section className="rounded-xl border border-brand-light bg-brand-wash p-5">
+            <h2 className="text-lg font-semibold text-brand-dark">Teste tes connaissances</h2>
+            <p className="mt-1 text-sm text-gray-700">Un court quiz pour vérifier que tu as bien compris la leçon.</p>
+            <Link
+              href={`${chemin}/quiz`}
+              className="mt-3 inline-block rounded-lg bg-brand-dark px-4 py-2.5 font-semibold text-white hover:bg-brand"
+            >
+              Commencer le quiz
+            </Link>
+          </section>
+        ) : null}
 
         <nav aria-label="Pagination de la leçon" className="flex flex-wrap justify-between gap-3 border-t border-gray-200 pt-5">
           {numero > 1 ? (

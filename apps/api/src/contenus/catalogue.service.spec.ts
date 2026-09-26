@@ -72,6 +72,7 @@ describe("CatalogueService", () => {
     const { service, prisma } = creerService();
     prisma.lecon.findFirst.mockResolvedValue({
       versionPubliee: versionLecon("Pythagore"),
+      quiz: { deletedAt: null, _count: { questions: 5 } },
       chapitre: {
         titre: "Le triangle rectangle",
         niveau: { libelle: "4e" },
@@ -95,6 +96,7 @@ describe("CatalogueService", () => {
       niveau: "4e",
       matiere: { slug: "maths", nom: "Mathématiques" },
       chapitre: "Le triangle rectangle",
+      aUnQuiz: true,
       precedente: { slug: "vocabulaire", titre: "Vocabulaire" },
       suivante: { slug: "reciproque", titre: "Réciproque" },
     });
@@ -116,6 +118,7 @@ describe("CatalogueService", () => {
 
     expect(lecon.precedente).toBeNull();
     expect(lecon.suivante).toBeNull();
+    expect(lecon.aUnQuiz).toBe(false);
   });
 
   it("renvoie 404 pour une leçon non publiée (le filtre public exclut les brouillons)", async () => {

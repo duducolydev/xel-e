@@ -2,9 +2,9 @@ import { Prisma, PrismaClient, Role, StatutCompte, StatutLecon } from "@prisma/c
 import { INFOS_MATIERES, type Matiere } from "@xel-e/shared";
 import { hasherMotDePasse } from "../src/auth/password";
 import { rendreLecon } from "../src/contenus/rendu-markdown";
-import { CHAPITRE_DEMO, contenuGenerique, LECON_DEMO } from "./contenus-demo";
+import { CHAPITRE_DEMO, contenuGenerique, LECON_DEMO, QUIZ_DEMO, questionsGeneriques } from "./contenus-demo";
 
-export { LECON_DEMO };
+export { LECON_DEMO, QUIZ_DEMO };
 
 export const NIVEAUX_SEED = [
   { libelle: "6e", ordre: 1 },
@@ -133,11 +133,17 @@ export async function seedChapitresEtLecons(
             },
           });
 
-          await prisma.quiz.upsert({
+          const quiz = await prisma.quiz.upsert({
             where: { leconId: lecon.id },
             update: {},
             create: { leconId: lecon.id },
           });
+          if ((await prisma.question.count({ where: { quizId: quiz.id } })) === 0) {
+            const questions = estLeconDemo ? QUIZ_DEMO : questionsGeneriques(titre);
+            await prisma.question.createMany({
+              data: questions.map((question, index) => ({ ...question, quizId: quiz.id, ordre: index + 1 })),
+            });
+          }
         }
       }
     }

@@ -55,6 +55,9 @@ export default async function PageTableauDeBord({
             >
               Voir les cours
             </Link>
+            <Link href="/mes-quiz" className="ml-4 mt-3 inline-block font-semibold text-brand-dark underline underline-offset-4">
+              Mes quiz
+            </Link>
           </div>
           <div className="rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900">Forum d&apos;entraide</h2>

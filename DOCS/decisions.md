@@ -222,3 +222,32 @@ dans S3 sous l'identifiant de la version : une version étant immuable, son PDF 
 (`playwright install --with-deps chromium`, Phase 13).
 
 **Date** : 2026-09-26 — Phase 3.
+
+---
+
+## D0014 — Règles du moteur de quiz
+
+**Contexte** : le brief demande de tester les « réponses partielles sur QCM multiple » sans fixer la
+règle de notation (choix tranché par le porteur du projet le 2026-09-26), et laisse ouverts plusieurs
+points de fonctionnement.
+
+**Décisions** :
+- **QCM à plusieurs bonnes réponses** : proportionnel avec pénalité — barème × (bonnes cochées −
+  mauvaises cochées) / nombre de bonnes, jamais négatif. Cocher toutes les cases ne rapporte rien.
+  QCM à une seule bonne réponse, vrai/faux et réponse courte : tout ou rien.
+- **Réponse courte** : casse, accents, espaces superflus et ponctuation finale ignorés ; virgule et
+  point décimal équivalents ; apostrophes typographiques normalisées. Chaque question liste ses
+  formulations acceptées (« 10 », « 10 cm »…).
+- **Score** : pourcentage des points, arrondi au dixième ; points par question arrondis au centième.
+  Seuil de réussite : 60 % (préparation de la Phase 5).
+- **Tentatives** : quiz réservé aux comptes connectés ; nombre de tentatives illimité, toutes gardées
+  dans l'historique ; **au plus une tentative en cours** par élève et par quiz (garanti par une
+  contrainte d'unicité, même avec deux onglets). La position (question affichée) est enregistrée à
+  chaque navigation pour reprendre exactement au même endroit.
+- **Anti-triche** : la correction est faite côté serveur uniquement ; le quiz envoyé au navigateur
+  est construit par liste blanche de champs (aucune bonne réponse, aucune explication). Le corrigé
+  est figé dans la tentative à la soumission : l'historique ne change pas si le quiz est modifié
+  ensuite.
+- **Pas de minuteur** en Phase 4 : la durée limitée arrive avec les examens blancs (Phase 9).
+
+**Date** : 2026-09-26 — Phase 4.

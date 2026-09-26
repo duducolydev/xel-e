@@ -86,6 +86,7 @@ export interface LeconPubliee {
   matiere: Omit<MatiereCatalogue, "nombreLecons">;
   chapitre: string;
   sections: SectionLecon[];
+  aUnQuiz: boolean;
   precedente: LeconResumee | null;
   suivante: LeconResumee | null;
 }

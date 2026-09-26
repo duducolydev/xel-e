@@ -5,23 +5,29 @@ export type ResultatApi<T> =
 const MESSAGE_RESEAU =
   "Impossible de joindre le serveur. Vérifie ta connexion internet puis réessaie.";
 
-function poster(chemin: string, corps?: unknown): Promise<Response> {
+type Methode = "POST" | "PUT";
+
+function poster(chemin: string, corps?: unknown, methode: Methode = "POST"): Promise<Response> {
   return fetch(`/api${chemin}`, {
-    method: "POST",
+    method: methode,
     headers: { "Content-Type": "application/json" },
     body: corps === undefined ? undefined : JSON.stringify(corps),
     credentials: "same-origin",
   });
 }
 
-export async function envoyer<T = unknown>(chemin: string, corps?: unknown): Promise<ResultatApi<T>> {
+export async function envoyer<T = unknown>(
+  chemin: string,
+  corps?: unknown,
+  methode: Methode = "POST",
+): Promise<ResultatApi<T>> {
   let reponse: Response;
   try {
-    reponse = await poster(chemin, corps);
+    reponse = await poster(chemin, corps, methode);
     // Cookie d'accès expiré pendant que la page restait ouverte : on renouvelle la session et on rejoue.
     if (reponse.status === 401 && !chemin.startsWith("/auth/")) {
       const rafraichi = await poster("/auth/rafraichir");
-      if (rafraichi.ok) reponse = await poster(chemin, corps);
+      if (rafraichi.ok) reponse = await poster(chemin, corps, methode);
     }
   } catch {
     return { ok: false, message: MESSAGE_RESEAU, erreurs: {} };

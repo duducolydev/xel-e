@@ -89,6 +89,7 @@ export class CatalogueService {
       where: { slug, ...FILTRE_LECONS_PUBLIQUES },
       include: {
         versionPubliee: true,
+        quiz: { select: { deletedAt: true, _count: { select: { questions: true } } } },
         chapitre: {
           include: {
             niveau: true,
@@ -124,6 +125,7 @@ export class CatalogueService {
         matiere: { libelle: info.libelle, slug: info.slug, nom: info.nom },
         chapitre: lecon.chapitre.titre,
         sections: version.sections as unknown as SectionLecon[],
+        aUnQuiz: !!lecon.quiz && lecon.quiz.deletedAt === null && lecon.quiz._count.questions > 0,
         precedente: voisines[position - 1] ?? null,
         suivante: voisines[position + 1] ?? null,
       },

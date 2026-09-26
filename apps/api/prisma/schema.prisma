@@ -260,6 +260,8 @@ model Question {
   enonce           String
   choix            Json?
   reponseCorrecte  Json
+  // Affichée avec le corrigé, jamais avant la soumission.
+  explication      String?
   bareme           Int          @default(1)
   ordre            Int
 
@@ -273,12 +275,21 @@ model Tentative {
   utilisateurId String
   utilisateur  User      @relation(fields: [utilisateurId], references: [id])
   reponses     Json?
+  // Index de la question affichée, pour reprendre au même endroit.
+  position     Int       @default(0)
+  // "<utilisateurId>:<quizId>" tant que la tentative est en cours, null ensuite :
+  // l'unicité garantit au plus une tentative en cours par élève et par quiz.
+  enCoursCle   String?   @unique
   score        Float?
+  pointsObtenus Float?
+  pointsTotal  Float?
+  // Corrigé figé à la soumission : l'historique ne change pas si le quiz est modifié ensuite.
+  correction   Json?
   demarreLe    DateTime  @default(now())
   termineLe    DateTime?
 
   @@index([quizId])
-  @@index([utilisateurId])
+  @@index([utilisateurId, termineLe])
 }
 
 // ---------------------------------------------------------------------------
