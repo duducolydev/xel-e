@@ -82,6 +82,13 @@ model User {
   contactParentEmail     String?
   consentementParentalLe DateTime?
 
+  // Série de jours actifs, en jours calendaires de Dakar (AAAA-MM-JJ).
+  serieJours       Int     @default(0)
+  serieRecord      Int     @default(0)
+  dernierJourActif String?
+  // Classement : sur demande uniquement, sous pseudonyme.
+  classementActif  Boolean @default(false)
+
   deletedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -101,6 +108,7 @@ model User {
   notifications    Notification[]
   leconsRedigees   Lecon[]
   versionsPubliees VersionLecon[]    @relation("VersionsPubliees")
+  gainsXp          GainXp[]
 
   @@index([role])
   @@index([niveauId])
@@ -285,6 +293,8 @@ model Tentative {
   pointsTotal  Float?
   // Corrigé figé à la soumission : l'historique ne change pas si le quiz est modifié ensuite.
   correction   Json?
+  // XP rapportée par cette tentative (quiz réussi ou sans faute pour la première fois).
+  xpGagne      Int       @default(0)
   demarreLe    DateTime  @default(now())
   termineLe    DateTime?
 
@@ -302,11 +312,32 @@ model Progression {
   utilisateur   User      @relation(fields: [utilisateurId], references: [id])
   leconId       String
   lecon         Lecon     @relation(fields: [leconId], references: [id])
-  pourcentage   Int       @default(0)
-  xp            Int       @default(0)
   termineLe     DateTime?
+  quizReussiLe  DateTime?
+  meilleurScore Float?
 
   @@unique([utilisateurId, leconId])
+}
+
+enum SourceXp {
+  LECON_TERMINEE
+  QUIZ_REUSSI
+  QUIZ_PARFAIT
+}
+
+// Registre des gains d'XP : l'unicité (utilisateur, source, clé) interdit tout gain en double,
+// et les dates permettent le classement de la semaine.
+model GainXp {
+  id            String   @id @default(uuid())
+  utilisateurId String
+  utilisateur   User     @relation(fields: [utilisateurId], references: [id])
+  source        SourceXp
+  cle           String
+  xp            Int
+  gagneLe       DateTime @default(now())
+
+  @@unique([utilisateurId, source, cle])
+  @@index([gagneLe])
 }
 
 model Badge {
@@ -427,5 +458,5 @@ model Notification {
   lu            Boolean  @default(false)
   createdAt     DateTime @default(now())
 
-  @@index([utilisateurId])
+  @@index([utilisateurId, lu])
 }

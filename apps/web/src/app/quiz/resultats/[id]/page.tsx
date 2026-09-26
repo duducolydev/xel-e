@@ -55,6 +55,11 @@ export default async function PageResultat({ params }: { params: Promise<{ id: s
           <p className="mt-3 font-semibold text-gray-900">
             {reussi ? "Bravo, quiz réussi !" : "Pas encore : relis la leçon et retente ta chance."}
           </p>
+          {resultat.xpGagne > 0 ? (
+            <p className="mt-2 inline-block rounded-full bg-brand-dark px-3 py-1 text-sm font-semibold text-white">
+              +{resultat.xpGagne} XP
+            </p>
+          ) : null}
         </section>
 
         <div className="flex flex-wrap gap-3">

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
+import { BoutonTerminerLecon } from "@/components/bouton-terminer-lecon";
 import { EntetePublic } from "@/components/entete-public";
 import { FilAriane } from "@/components/fil-ariane";
 import { lirePublic, SITE_URL } from "@/lib/api-public";
@@ -165,6 +166,8 @@ export default async function PageLecon({
           </h2>
           <div className="contenu-lecon" dangerouslySetInnerHTML={{ __html: section?.html ?? "" }} />
         </article>
+
+        {numero === total ? <BoutonTerminerLecon slug={lecon.slug} cheminLecon={chemin} /> : null}
 
         {lecon.aUnQuiz && numero === total ? (
           <section className="rounded-xl border border-brand-light bg-brand-wash p-5">

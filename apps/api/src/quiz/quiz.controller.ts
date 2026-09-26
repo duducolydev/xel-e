@@ -10,6 +10,7 @@ import {
 } from "@xel-e/shared";
 import { CurrentUser, type UtilisateurAuthentifie } from "../auth/decorators";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
+import { ProgressionModule } from "../progression/progression.controller";
 import { QuizService } from "./quiz.service";
 
 const idValide = new ParseUUIDPipe({ version: "4" });
@@ -83,6 +84,7 @@ export class QuizController {
 }
 
 @Module({
+  imports: [ProgressionModule],
   controllers: [QuizController],
   providers: [QuizService],
 })

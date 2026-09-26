@@ -8,6 +8,7 @@ import { validateEnv } from "./config/env";
 import { HealthModule } from "./health/health.module";
 import { MailModule } from "./mail/mail.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { ProgressionModule } from "./progression/progression.controller";
 import { QuizModule } from "./quiz/quiz.controller";
 import { RedisModule } from "./redis/redis.module";
 
@@ -26,6 +27,7 @@ import { RedisModule } from "./redis/redis.module";
     AdminModule,
     ContenusModule,
     QuizModule,
+    ProgressionModule,
   ],
 })
 export class AppModule {}

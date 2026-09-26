@@ -4,6 +4,7 @@ import Redis from "ioredis";
 export const MAILHOG_URL = process.env.MAILHOG_API_URL ?? "http://127.0.0.1:8025";
 
 export async function viderBase(prisma: PrismaClient): Promise<void> {
+  await prisma.gainXp.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.jetonVerification.deleteMany();
   await prisma.signalement.deleteMany();

@@ -2,7 +2,10 @@ import { BadRequestException, ConflictException, NotFoundException } from "@nest
 import type { Tentative } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { PrismaService } from "../prisma/prisma.service";
+import type { ProgressionService } from "../progression/progression.service";
 import { QuizService } from "./quiz.service";
+
+const progression = { enregistrerQuizSoumis: async () => ({ xp: 0, badges: [] }) };
 
 const QUESTIONS = [
   {
@@ -101,7 +104,7 @@ describe("QuizService", () => {
 
   beforeEach(() => {
     const base = creerFausseBase();
-    service = new QuizService(base.prisma);
+    service = new QuizService(base.prisma, progression as unknown as ProgressionService);
     tentatives = base.tentatives;
   });
 

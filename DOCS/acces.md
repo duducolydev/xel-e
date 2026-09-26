@@ -1,6 +1,6 @@
 # Matrice d'accès — rôle × ressource
 
-État à la fin de la Phase 4. Chaque ligne est vérifiée automatiquement :
+État à la fin de la Phase 5. Chaque ligne est vérifiée automatiquement :
 
 - API : `apps/api/test/acces.e2e-spec.ts` rejoue la matrice ci-dessous avec les comptes de démo
   (`MATRICE` dans le test ⇔ tableau « API » de ce document, à garder identiques).
@@ -32,6 +32,8 @@ Légende : **200/204** autorisé · **401** non connecté · **403** connecté m
 | `GET /quiz/tentatives` (son propre historique) | 401 | 200 | 200 | 200 | 200 |
 | Lire, remplir ou soumettre **sa** tentative | 401 | 2xx | 2xx | 2xx | 2xx |
 | Lire, remplir ou soumettre la tentative **d’un autre** | 401 | 404 | 404 | 404 | 404 |
+| `GET /progression/tableau-de-bord`, `GET /progression/classement`, `POST /progression/lecons/:slug/terminer` | 401 | 200 | 200 | 200 | 200 |
+| `PUT /progression/classement` (participer au classement) | 401 | 204 | 403 | 403 | 403 |
 
 Toute route est **protégée par défaut** (guard global) : une nouvelle route non annotée `@Public()`
 exige une session, et `@Roles(...)` restreint en plus par rôle.
@@ -47,6 +49,7 @@ exige une session, et `@Roles(...)` restreint en plus par rôle.
 | `/cours/:niveau/:matiere/:slug` (brouillon) | 404 | 404 | 404 | 404 | 404 |
 | `/cours/:niveau/:matiere/:slug/quiz`, `/quiz/resultats/:id`, `/mes-quiz` | → `/connexion` | ✓ | ✓ | ✓ | ✓ |
 | `/tableau-de-bord` | → `/connexion` | ✓ | ✓ | ✓ | ✓ |
+| `/classement` | → `/connexion` | ✓ | → `/tableau-de-bord` | → idem | → idem |
 | `/admin` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
 
 C'est l'API qui fait autorité : la page `/admin` redirige sur la réponse 403 de l'API, pas sur une

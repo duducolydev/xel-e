@@ -1,9 +1,11 @@
+import type { TableauDeBordProgression } from "@xel-e/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EnteteConnecte } from "@/components/entete-connecte";
 import { Alerte } from "@/components/ui";
-import { utilisateurCourant } from "@/lib/api-serveur";
+import { appelerApi, utilisateurCourant } from "@/lib/api-serveur";
+import { ProgressionEleve } from "./progression-eleve";
 
 export const metadata: Metadata = { title: "Tableau de bord — Xel-E" };
 
@@ -16,6 +18,8 @@ export default async function PageTableauDeBord({
   if (!utilisateur) redirect("/connexion?suite=/tableau-de-bord");
   const { acces } = await searchParams;
   const prenom = utilisateur.nomComplet.split(" ")[0];
+  const reponseProgression = utilisateur.role === "ELEVE" ? await appelerApi("/progression/tableau-de-bord") : null;
+  const progression = reponseProgression?.ok ? ((await reponseProgression.json()) as TableauDeBordProgression) : null;
 
   return (
     <>
@@ -41,6 +45,8 @@ export default async function PageTableauDeBord({
           </Alerte>
         ) : null}
 
+        {progression ? <ProgressionEleve tableau={progression} /> : null}
+
         <section className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900">Mes cours</h2>
@@ -58,6 +64,11 @@ export default async function PageTableauDeBord({
             <Link href="/mes-quiz" className="ml-4 mt-3 inline-block font-semibold text-brand-dark underline underline-offset-4">
               Mes quiz
             </Link>
+            {utilisateur.role === "ELEVE" ? (
+              <Link href="/classement" className="ml-4 mt-3 inline-block font-semibold text-brand-dark underline underline-offset-4">
+                Classement
+              </Link>
+            ) : null}
           </div>
           <div className="rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900">Forum d&apos;entraide</h2>

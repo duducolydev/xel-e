@@ -251,3 +251,37 @@ points de fonctionnement.
 - **Pas de minuteur** en Phase 4 : la durée limitée arrive avec les examens blancs (Phase 9).
 
 **Date** : 2026-09-26 — Phase 4.
+
+---
+
+## D0015 — Progression, XP, badges, série et classement
+
+**Contexte** : points ouverts du brief (Phase 5), tranchés par le porteur du projet le 2026-09-26
+pour les quatre premiers.
+
+**Décisions** :
+- **Leçon terminée** : geste volontaire, bouton « J'ai terminé cette leçon » sur la dernière
+  section (un saut direct à la fin via le sommaire ne valide rien).
+- **Jour actif** (série) : une leçon terminée ou un quiz soumis, même raté, dans la journée
+  calendaire de Dakar. Même jour ⇒ pas d'incrément ; lendemain ⇒ +1 ; jour manqué ⇒ la série repart.
+  Une série est affichée tant que le dernier jour actif est aujourd'hui ou hier.
+- **Classement** : sur demande uniquement (personne n'y figure par défaut), sous un pseudonyme
+  choisi par l'élève (unique, lettres sans accent, chiffres, `_`, `-`), retrait possible à tout
+  moment ; limité aux élèves du même niveau ; seuls pseudonyme et XP sont exposés.
+- **Période du classement** : XP de la semaine, remise à zéro chaque lundi à 00:00 (heure de Dakar).
+- **XP** : +10 par leçon terminée, +20 pour un quiz réussi (≥ 60 %), +10 de bonus pour 100 %, chaque
+  gain une seule fois par leçon ou par quiz (refaire un quiz ne rapporte plus rien). Les gains sont
+  inscrits dans un registre avec une contrainte d'unicité : aucune double attribution possible,
+  même sous requêtes concurrentes. Les badges ne rapportent pas d'XP.
+- **Badges** : Première leçon, Premier quiz réussi, Sans faute, Chapitre bouclé, Sept jours de
+  suite, Lecteur assidu (dix leçons). Le catalogue vit dans le code et la table est alignée au
+  démarrage de l'API. Chaque nouveau badge crée une notification in-app, une seule fois.
+- **Avancement d'un chapitre** : une étape par leçon terminée, plus une par quiz réussi (si la
+  leçon en a un) ; chapitre bouclé à 100 %. L'avancement d'une matière agrège les étapes de ses
+  chapitres (et non la moyenne des pourcentages).
+- **Mineurs** : le classement n'expose qu'un pseudonyme et un nombre d'XP, sans aucun moyen de
+  contact ; il n'est donc pas conditionné à l'accord parental, contrairement au forum (Phase 7).
+- Un incident d'enregistrement de la progression ne fait jamais échouer la soumission d'un quiz :
+  la note est enregistrée d'abord, l'incident est journalisé.
+
+**Date** : 2026-09-26 — Phase 5.

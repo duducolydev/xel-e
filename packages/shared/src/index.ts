@@ -6,3 +6,4 @@ export * from "./enums";
 export * from "./age";
 export * from "./contenus";
 export * from "./quiz";
+export * from "./progression";

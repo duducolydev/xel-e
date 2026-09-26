@@ -52,5 +52,6 @@ export const config = {
     "/cours/:niveau/:matiere/:slug/quiz",
     "/quiz/:path*",
     "/mes-quiz",
+    "/classement",
   ],
 };

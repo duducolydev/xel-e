@@ -75,6 +75,21 @@ const MATRICE: Ligne[] = [
   },
   {
     methode: "get",
+    chemin: "/progression/tableau-de-bord",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 200, PARENT: 200, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: "/progression/classement",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 200, PARENT: 200, ADMIN: 200 },
+  },
+  {
+    methode: "post",
+    chemin: `/progression/lecons/${LECON_DEMO.slug}/terminer`,
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 200, PARENT: 200, ADMIN: 200 },
+  },
+  {
+    methode: "get",
     chemin: "/admin/chapitres?niveau=4e&matiere=Maths",
     attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
   },

@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { Prisma, type Tentative } from "@prisma/client";
 import {
   INFOS_MATIERES,
@@ -14,6 +14,7 @@ import {
 } from "@xel-e/shared";
 import { FILTRE_LECONS_PUBLIQUES } from "../contenus/workflow";
 import { PrismaService } from "../prisma/prisma.service";
+import { ProgressionService } from "../progression/progression.service";
 import { corrigerTentative, type QuestionCorrigible } from "./correction";
 import { versQuestionPublique } from "./quiz-public";
 
@@ -94,7 +95,12 @@ function verifierForme(question: QuestionCorrigible, reponse: Reponse): void {
 
 @Injectable()
 export class QuizService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(QuizService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly progression: ProgressionService,
+  ) {}
 
   private async quizDeLecon(slug: string) {
     const quiz = await this.prisma.quiz.findFirst({
@@ -220,8 +226,19 @@ export class QuizService {
     });
     if (count !== 1) throw new ConflictException(TENTATIVE_TERMINEE);
 
+    // La note compte d'abord : un incident de progression ne doit pas faire échouer la soumission.
+    let xpGagne = 0;
+    try {
+      const gains = await this.progression.enregistrerQuizSoumis(utilisateurId, tentative.quizId, resultat.score, termineLe);
+      xpGagne = gains.xp;
+      if (xpGagne > 0) await this.prisma.tentative.updateMany({ where: { id: tentativeId }, data: { xpGagne } });
+    } catch (error) {
+      this.logger.error(`Progression non enregistrée pour la tentative ${tentativeId} : ${(error as Error).message}`);
+    }
+
     return {
       id: tentativeId,
+      xpGagne,
       lecon: versLeconQuiz(quiz.lecon),
       score: resultat.score,
       pointsObtenus: resultat.pointsObtenus,
@@ -240,6 +257,7 @@ export class QuizService {
     });
     return {
       id: tentative.id,
+      xpGagne: tentative.xpGagne,
       lecon: versLeconQuiz(quiz.lecon),
       score: tentative.score ?? 0,
       pointsObtenus: tentative.pointsObtenus ?? 0,

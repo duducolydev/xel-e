@@ -1,17 +1,17 @@
 export type ResultatApi<T> =
   | { ok: true; donnees: T }
-  | { ok: false; message: string; erreurs: Record<string, string> };
+  | { ok: false; message: string; erreurs: Record<string, string>; statut: number };
 
 const MESSAGE_RESEAU =
   "Impossible de joindre le serveur. Vérifie ta connexion internet puis réessaie.";
 
-type Methode = "POST" | "PUT";
+type Methode = "GET" | "POST" | "PUT";
 
 function poster(chemin: string, corps?: unknown, methode: Methode = "POST"): Promise<Response> {
   return fetch(`/api${chemin}`, {
     method: methode,
     headers: { "Content-Type": "application/json" },
-    body: corps === undefined ? undefined : JSON.stringify(corps),
+    body: corps === undefined || methode === "GET" ? undefined : JSON.stringify(corps),
     credentials: "same-origin",
   });
 }
@@ -30,7 +30,7 @@ export async function envoyer<T = unknown>(
       if (rafraichi.ok) reponse = await poster(chemin, corps, methode);
     }
   } catch {
-    return { ok: false, message: MESSAGE_RESEAU, erreurs: {} };
+    return { ok: false, message: MESSAGE_RESEAU, erreurs: {}, statut: 0 };
   }
 
   const texte = await reponse.text();
@@ -42,5 +42,9 @@ export async function envoyer<T = unknown>(
     typeof corpsErreur.message === "string"
       ? corpsErreur.message
       : "Une erreur est survenue. Réessaie dans un instant.";
-  return { ok: false, message, erreurs: corpsErreur.erreurs ?? {} };
+  return { ok: false, message, erreurs: corpsErreur.erreurs ?? {}, statut: reponse.status };
+}
+
+export function lire<T>(chemin: string): Promise<ResultatApi<T>> {
+  return envoyer<T>(chemin, undefined, "GET");
 }

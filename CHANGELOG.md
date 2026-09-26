@@ -246,3 +246,58 @@ théorème de Pythagore » (4e, Maths) par le porteur du projet (fond des questi
 - Pas encore d'interface ni d'API pour rédiger des quiz : ils viennent du seed ; le générateur de
   quiz est prévu dans le studio professeur (Phase 6).
 - Les réponses saisies hors connexion ne sont pas mises en file : c'est l'objet de la Phase 11.
+
+---
+
+## Phase 5 — Progression et gamification
+
+**Fait** :
+- Migration `20260926221201_progression` (réversible, `down.sql` testé) : registre `GainXp` (unicité
+  élève + source + clé), leçon terminée / quiz réussi / meilleur score sur `Progression` (les
+  colonnes `pourcentage` et `xp`, jamais utilisées, sont remplacées par le registre), série de jours
+  actifs et participation au classement sur `User`, XP rapportée par chaque tentative de quiz.
+- Événements de progression : bouton « J'ai terminé cette leçon » (dernière section), soumission
+  de quiz (réussi à partir de 60 %). XP : +10 leçon, +20 quiz réussi, +10 sans-faute, chacun une
+  seule fois par leçon ou quiz.
+- Série de jours actifs en heure de Dakar (leçon terminée ou quiz soumis) ; badges (Première
+  leçon, Premier quiz réussi, Sans faute, Chapitre bouclé, Sept jours de suite, Lecteur assidu),
+  chacun notifié une seule fois dans l'application.
+- Tableau de bord élève : XP totale et de la semaine, série et record, notifications (avec « Tout
+  marquer comme lu »), avancement par matière et par chapitre, badges obtenus et à débloquer,
+  dernières activités. XP gagnée affichée sur le résultat d'un quiz.
+- Classement hebdomadaire par niveau, sur demande et sous pseudonyme choisi, retrait possible.
+- Seed de démonstration (`pnpm seed` uniquement) produit par les vrais services : l'élève de démo a
+  terminé trois leçons sur trois jours (série de 3), réussi un quiz à 100 % (60 XP), et deux
+  camarades de démo peuplent le classement.
+
+**Décisions** : `DOCS/decisions.md` D0015 — les quatre choix validés (leçon terminée par bouton,
+jour actif = leçon terminée ou quiz soumis, classement sur demande sous pseudonyme, XP de la
+semaine) et les règles d'XP, de badges et d'avancement.
+
+**Tests** :
+- Unitaires : chaque règle de badge isolément (au seuil et juste en dessous), catalogue entièrement
+  couvert ; idempotence (terminer deux fois, refaire un quiz, attribution concurrente d'un badge)
+  sans double XP, double badge ni double notification ; série (fuseau Africa/Dakar comparé à
+  Europe/Paris, jour manqué ⇒ remise à zéro, même jour ⇒ pas d'incrément, fin de mois) ; début de
+  semaine ; agrégat de chapitre = f(leçons terminées, quiz réussis) ; classement avec ex æquo ;
+  tableau de bord et réglages du classement.
+- e2e API : parcours d'un nouvel élève jusqu'à 40 XP, 3 badges et 3 notifications ; recoupement de
+  chaque chiffre du tableau de bord avec la base, pour cet élève et pour le compte de démo ;
+  classement (activation, pseudonyme invalide ou pris, réservé aux élèves, retrait) ; matrice
+  d'accès étendue à 85 cas.
+- e2e Playwright : leçon terminée + quiz réussi ⇒ le tableau de bord affiche 40 XP, la série, les
+  badges et l'avancement, atteint par les liens de l'interface sans recharger la page ; badge
+  « Première leçon » avec sa notification in-app ; participation au classement puis retrait.
+
+**Validation** : chiffres du tableau de bord recoupés avec la base par un test automatisé (élève
+neuf et compte de démo) ; revue visuelle sur mobile du tableau de bord et du classement.
+
+**Correctif trouvé en route** : l'attribution d'un badge échouait (erreur 500) si la table des
+badges avait été vidée après le démarrage de l'API ; elle recrée désormais le badge à partir du
+catalogue du code (test unitaire dédié).
+
+**Dette éventuelle** :
+- Si l'enregistrement de la progression échoue après une soumission de quiz, l'incident est
+  journalisé mais pas rejoué automatiquement (à reprendre avec la file de jobs BullMQ, Phase 8).
+- Les notifications ne sont visibles que sur le tableau de bord (pas encore d'indicateur dans
+  l'en-tête des autres pages).

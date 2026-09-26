@@ -64,6 +64,7 @@ export interface DetailCorrection {
 
 export interface ResultatTentative {
   id: string;
+  xpGagne: number;
   lecon: { slug: string; titre: string; niveau: Niveau; matiere: string };
   score: number;
   pointsObtenus: number;
