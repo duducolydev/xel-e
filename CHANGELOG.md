@@ -301,3 +301,66 @@ catalogue du code (test unitaire dédié).
   journalisé mais pas rejoué automatiquement (à reprendre avec la file de jobs BullMQ, Phase 8).
 - Les notifications ne sont visibles que sur le tableau de bord (pas encore d'indicateur dans
   l'en-tête des autres pages).
+
+---
+
+## Phase 6 — Studio professeur et circuit de validation
+
+**Fait** :
+- Migration `20260926225430_studio` (réversible, `down.sql` testé) : commentaires de revue
+  (`CommentaireRevue`), date de soumission, quiz de travail et compteur de vues sur `Lecon`.
+- Machine à états **par rôle** : le professeur rédige et soumet ses leçons, seule l'administration
+  publie ou refuse ; une leçon en revue est verrouillée. Le refus exige un commentaire, conservé
+  avec la leçon (remplace l'ancien « renvoyer en brouillon » sans motif).
+- Espace professeur `/studio` : ses leçons et leur statut (avec le dernier refus à corriger),
+  création dans un chapitre existant, notifications, statistiques de ses leçons en ligne (vues,
+  quiz passés, taux de réussite, score moyen, et totaux).
+- Éditeur de leçon : Markdown avec aperçu (rendu identique à la publication, formules KaTeX),
+  insertion d'images, générateur de quiz (QCM à une ou plusieurs bonnes réponses, vrai/faux,
+  réponse courte ; barème, explication, ordre), enregistrement, soumission, suppression d'un
+  brouillon jamais publié. Le quiz est relu avec la leçon et mis en ligne avec elle.
+- File de revue `/admin/revue` : leçons en attente (plus ancienne d'abord), relecture du cours
+  rendu et du quiz corrigé, puis « Valider et publier » ou « Refuser » avec commentaire.
+- Notifications in-app : l'auteur à chaque changement de statut décidé par un autre, les
+  administrateurs à chaque soumission (module `notifications` réutilisable).
+- Attribution « Cours proposé par Pr X » sur les leçons des professeurs ; compteur de vues
+  (un visiteur par heure, empreinte hachée dans Redis).
+- Liens « Studio » dans l'en-tête (professeurs, admins) et depuis le tableau de bord professeur.
+
+**Décisions** : `DOCS/decisions.md` D0016 — leçons seulement, dans les chapitres existants (choix du
+porteur du projet) ; droits par rôle ; quiz de travail appliqué à la publication ; définitions des
+vues et du taux de réussite ; attribution réservée aux professeurs. `DOCS/acces.md` mis à jour.
+
+**Tests** :
+- Unitaires (313 au total côté API) : machine à états (transitions autorisées et interdites) et
+  droits par rôle — un professeur ne peut ni publier ni refuser (403), ne touche qu'à ses leçons
+  (404 pour les autres), une leçon en revue est verrouillée pour tous ; circuit complet du service
+  de publication (refus commenté + notification, publication + notification, pas de notification
+  de sa propre action, quiz appliqué seulement à la publication, questions conservées/créées/
+  supprimées, quiz vidé retiré, quiz invalide refusé, concurrence) ; conversion quiz en ligne ⇄
+  éditeur sans perte (même correction avant et après) ; agrégats de statistiques sur données
+  synthétiques (pondération, absence de tentatives, arrondis, tri) ; compteur de vues
+  (dédoublonnage, IP jamais en clair, Redis indisponible) ; notifications ; attribution.
+- e2e API (198 au total) : circuit complet prof crée leçon + quiz → soumet → file de revue admin →
+  refus commenté → le prof voit commentaire et notification, corrige, resoumet → l'admin publie →
+  l'élève lit la leçon attribuée et fait le quiz → vues et taux de réussite remontent au prof ;
+  cloisonnement entre professeurs ; matrice d'accès étendue à 125 cas.
+- e2e Playwright (20 au total) : le même circuit de bout en bout dans le navigateur, avec trois
+  sessions (prof, admin, élève), aperçu KaTeX, refus sans commentaire rejeté, et la vue de l'élève
+  visible dans les statistiques du prof ; un élève n'accède pas au studio.
+
+**Correctif trouvé en route** : le test unitaire du seed (purement CPU : argon2id et rendu KaTeX de
+72 leçons, parfois deux fois) dépassait le délai par défaut de 5 s sur une machine chargée ; délai
+porté à 30 s pour ce seul bloc.
+
+**Dette éventuelle** :
+- Le compteur de vues repose sur l'IP + navigateur : des élèves d'une même classe derrière une
+  seule IP et le même navigateur comptent pour une vue par heure (sous-estimation assumée).
+- Pas d'éditeur WYSIWYG ni d'enregistrement automatique : le professeur enregistre à la main (un
+  indicateur signale les modifications non enregistrées).
+- Les notifications n'ont pas de lien direct vers la leçon concernée ; pas encore d'envoi par
+  email (Phase 8, avec BullMQ).
+- Observé une fois pendant la validation : dans la suite Playwright complète, le test « terminer une
+  leçon + réussir son quiz » a été renvoyé vers la connexion en plein quiz (session perdue avec le
+  TTL d'accès de 20 s des e2e) ; il repasse seul (3/3) et le reste de la suite est vert (19/20).
+  Cause non identifiée, code d'authentification non modifié en Phase 6 : à surveiller en CI.

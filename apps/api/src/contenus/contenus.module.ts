@@ -7,6 +7,7 @@ import { MediasService } from "./medias.service";
 import { PdfService } from "./pdf.service";
 import { PublicationService } from "./publication.service";
 import { StockageService } from "./stockage.service";
+import { VuesService } from "./vues.service";
 
 @Module({
   controllers: [CatalogueController, AdminContenusController],
@@ -17,6 +18,8 @@ import { StockageService } from "./stockage.service";
     MediasService,
     PdfService,
     ExportPdfService,
+    VuesService,
   ],
+  exports: [PublicationService, MediasService],
 })
 export class ContenusModule {}

@@ -81,7 +81,9 @@ function createMockPrisma() {
   return { prisma, stores };
 }
 
-describe("seedAll", () => {
+// Seed purement CPU (hash argon2id des comptes, rendu KaTeX de 72 leçons), parfois deux fois par test :
+// le délai par défaut de 5 s est trop juste sur une machine chargée.
+describe("seedAll", { timeout: 30_000 }, () => {
   it("crée le nombre attendu d'enregistrements", async () => {
     const { prisma, stores } = createMockPrisma();
 

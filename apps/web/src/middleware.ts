@@ -49,6 +49,7 @@ export const config = {
   matcher: [
     "/tableau-de-bord/:path*",
     "/admin/:path*",
+    "/studio/:path*",
     "/cours/:niveau/:matiere/:slug/quiz",
     "/quiz/:path*",
     "/mes-quiz",

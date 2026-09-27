@@ -109,6 +109,7 @@ model User {
   leconsRedigees   Lecon[]
   versionsPubliees VersionLecon[]    @relation("VersionsPubliees")
   gainsXp          GainXp[]
+  commentairesRevue CommentaireRevue[] @relation("CommentairesRevue")
 
   @@index([role])
   @@index([niveauId])
@@ -207,6 +208,12 @@ model Lecon {
   ordre       Int
   auteurId    String?
   auteur      User?       @relation(fields: [auteurId], references: [id])
+  // Quiz de la copie de travail, au format de l'éditeur ; appliqué au quiz en ligne à la publication
+  // (null = pas de modification en cours).
+  quizBrouillon Json?
+  soumisLe      DateTime?
+  // Lectures comptées une fois par visiteur et par heure.
+  vues          Int       @default(0)
 
   versionPublieeId String?       @unique
   versionPubliee   VersionLecon? @relation("VersionPubliee", fields: [versionPublieeId], references: [id])
@@ -218,9 +225,22 @@ model Lecon {
 
   quiz         Quiz?
   progressions Progression[]
+  commentaires CommentaireRevue[]
 
   @@unique([chapitreId, ordre])
   @@index([statut])
+}
+
+model CommentaireRevue {
+  id        String   @id @default(uuid())
+  leconId   String
+  lecon     Lecon    @relation(fields: [leconId], references: [id])
+  auteurId  String
+  auteur    User     @relation("CommentairesRevue", fields: [auteurId], references: [id])
+  contenu   String
+  createdAt DateTime @default(now())
+
+  @@index([leconId])
 }
 
 // Instantané figé d'une leçon au moment de sa publication (un trigger SQL interdit toute mise à jour).

@@ -16,6 +16,7 @@ export async function viderBase(prisma: PrismaClient): Promise<void> {
   await prisma.tentative.deleteMany();
   await prisma.question.deleteMany();
   await prisma.quiz.deleteMany();
+  await prisma.commentaireRevue.deleteMany();
   await prisma.versionLecon.deleteMany();
   await prisma.lecon.deleteMany();
   await prisma.chapitre.deleteMany();
@@ -31,7 +32,7 @@ export async function viderBase(prisma: PrismaClient): Promise<void> {
 export async function viderLimiteurs(): Promise<void> {
   const redis = new Redis(process.env.REDIS_URL ?? "redis://127.0.0.1:6379");
   try {
-    const cles = await redis.keys("rl:*");
+    const cles = [...(await redis.keys("rl:*")), ...(await redis.keys("vue:*"))];
     if (cles.length > 0) await redis.del(...cles);
   } finally {
     redis.disconnect();

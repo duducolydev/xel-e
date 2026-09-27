@@ -7,3 +7,4 @@ export * from "./age";
 export * from "./contenus";
 export * from "./quiz";
 export * from "./progression";
+export * from "./studio";

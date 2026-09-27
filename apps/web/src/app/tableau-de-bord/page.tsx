@@ -47,6 +47,18 @@ export default async function PageTableauDeBord({
 
         {progression ? <ProgressionEleve tableau={progression} /> : null}
 
+        {utilisateur.role === "PROFESSEUR" ? (
+          <section className="rounded-xl border border-brand-light bg-brand-wash p-5">
+            <h2 className="font-semibold text-brand-dark">Mon studio</h2>
+            <p className="mt-1 text-sm text-gray-700">
+              Rédige des leçons et leurs quiz, suis leur relecture et leurs statistiques.
+            </p>
+            <Link href="/studio" className="mt-3 inline-block font-semibold text-brand-dark underline underline-offset-4">
+              Ouvrir mon studio
+            </Link>
+          </section>
+        ) : null}
+
         <section className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900">Mes cours</h2>

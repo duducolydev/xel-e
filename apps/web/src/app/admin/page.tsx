@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EnteteConnecte } from "@/components/entete-connecte";
 import { appelerApi, utilisateurCourant } from "@/lib/api-serveur";
@@ -29,6 +30,11 @@ export default async function PageAdmin() {
       <EnteteConnecte utilisateur={utilisateur} />
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         <h1 className="text-2xl font-bold text-brand-dark">Administration</h1>
+        <p>
+          <Link href="/admin/revue" className="font-semibold text-brand-dark underline underline-offset-4">
+            Leçons à relire
+          </Link>
+        </p>
         <section>
           <h2 className="mb-3 text-lg font-semibold text-gray-900">Professeurs en attente de validation</h2>
           {professeurs.length === 0 ? (

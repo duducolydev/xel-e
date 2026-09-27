@@ -1,10 +1,12 @@
-import { Controller, Get, Header, Param, Res, StreamableFile } from "@nestjs/common";
+import { Controller, Get, Header, HttpCode, HttpStatus, Param, Post, Req, Res, StreamableFile } from "@nestjs/common";
 import type { EntreePlanDuSite, LeconPubliee, NiveauCatalogue, PageMatiere } from "@xel-e/shared";
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { Public } from "../auth/decorators";
+import { LimiterDebit } from "../auth/rate-limit";
 import { CatalogueService } from "./catalogue.service";
 import { ExportPdfService } from "./export-pdf.service";
 import { MediasService } from "./medias.service";
+import { VuesService } from "./vues.service";
 
 @Public()
 @Controller()
@@ -13,6 +15,7 @@ export class CatalogueController {
     private readonly catalogue: CatalogueService,
     private readonly exportPdf: ExportPdfService,
     private readonly medias: MediasService,
+    private readonly vues: VuesService,
   ) {}
 
   @Get("catalogue")
@@ -33,6 +36,14 @@ export class CatalogueController {
   @Get("lecons/:slug")
   async lecon(@Param("slug") slug: string): Promise<LeconPubliee> {
     return (await this.catalogue.versionEnLigne(slug)).lecon;
+  }
+
+  // Appelé par la page de la leçon : une vue par visiteur et par heure (statistiques des professeurs).
+  @Post("lecons/:slug/vue")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @LimiterDebit({ nom: "vues", max: 600, fenetreSecondes: 60 })
+  vue(@Param("slug") slug: string, @Req() requete: Request): Promise<void> {
+    return this.vues.enregistrer(slug, requete.ip ?? "inconnue", requete.get("user-agent") ?? "");
   }
 
   @Get("lecons/:slug/pdf")

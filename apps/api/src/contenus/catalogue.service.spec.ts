@@ -1,7 +1,7 @@
 import { NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import type { PrismaService } from "../prisma/prisma.service";
-import { CatalogueService } from "./catalogue.service";
+import { attribution, CatalogueService } from "./catalogue.service";
 
 const publieLe = new Date("2026-09-26T10:00:00Z");
 
@@ -73,6 +73,7 @@ describe("CatalogueService", () => {
     prisma.lecon.findFirst.mockResolvedValue({
       versionPubliee: versionLecon("Pythagore"),
       quiz: { deletedAt: null, _count: { questions: 5 } },
+      auteur: { role: "PROFESSEUR", nomComplet: "Awa Ndiaye" },
       chapitre: {
         titre: "Le triangle rectangle",
         niveau: { libelle: "4e" },
@@ -97,6 +98,7 @@ describe("CatalogueService", () => {
       matiere: { slug: "maths", nom: "Mathématiques" },
       chapitre: "Le triangle rectangle",
       aUnQuiz: true,
+      auteur: "Pr Awa Ndiaye",
       precedente: { slug: "vocabulaire", titre: "Vocabulaire" },
       suivante: { slug: "reciproque", titre: "Réciproque" },
     });
@@ -119,6 +121,13 @@ describe("CatalogueService", () => {
     expect(lecon.precedente).toBeNull();
     expect(lecon.suivante).toBeNull();
     expect(lecon.aUnQuiz).toBe(false);
+    expect(lecon.auteur).toBeNull();
+  });
+
+  it("crédite uniquement les professeurs (pas les contenus de l'équipe)", () => {
+    expect(attribution({ role: "PROFESSEUR", nomComplet: "Moussa Sarr" })).toBe("Pr Moussa Sarr");
+    expect(attribution({ role: "ADMIN", nomComplet: "Équipe Xel-E" })).toBeNull();
+    expect(attribution(null)).toBeNull();
   });
 
   it("renvoie 404 pour une leçon non publiée (le filtre public exclut les brouillons)", async () => {

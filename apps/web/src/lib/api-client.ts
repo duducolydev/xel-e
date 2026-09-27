@@ -5,13 +5,15 @@ export type ResultatApi<T> =
 const MESSAGE_RESEAU =
   "Impossible de joindre le serveur. Vérifie ta connexion internet puis réessaie.";
 
-type Methode = "GET" | "POST" | "PUT";
+type Methode = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 function poster(chemin: string, corps?: unknown, methode: Methode = "POST"): Promise<Response> {
+  // Un FormData (téléversement) part tel quel : le navigateur fixe lui-même le type multipart.
+  const formulaire = corps instanceof FormData;
   return fetch(`/api${chemin}`, {
     method: methode,
-    headers: { "Content-Type": "application/json" },
-    body: corps === undefined || methode === "GET" ? undefined : JSON.stringify(corps),
+    headers: formulaire ? undefined : { "Content-Type": "application/json" },
+    body: corps === undefined || methode === "GET" ? undefined : formulaire ? corps : JSON.stringify(corps),
     credentials: "same-origin",
   });
 }

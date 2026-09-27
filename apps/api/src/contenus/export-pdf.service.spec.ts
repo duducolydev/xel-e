@@ -18,6 +18,7 @@ const lecon: LeconPubliee = {
   chapitre: "Le triangle rectangle",
   sections: [{ titre: "Figure", html: `<p><img src="/api/medias/${IMAGE}" alt="triangle"></p>` }],
   aUnQuiz: false,
+  auteur: null,
   precedente: null,
   suivante: null,
 };

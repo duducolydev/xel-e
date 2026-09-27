@@ -1,6 +1,6 @@
 # Matrice d'accès — rôle × ressource
 
-État à la fin de la Phase 5. Chaque ligne est vérifiée automatiquement :
+État à la fin de la Phase 6. Chaque ligne est vérifiée automatiquement :
 
 - API : `apps/api/test/acces.e2e-spec.ts` rejoue la matrice ci-dessous avec les comptes de démo
   (`MATRICE` dans le test ⇔ tableau « API » de ce document, à garder identiques).
@@ -26,8 +26,16 @@ Légende : **200/204** autorisé · **401** non connecté · **403** connecté m
 | `GET /lecons/:slug`, `/lecons/:slug/pdf` (leçon publiée) | 200 | 200 | 200 | 200 | 200 |
 | `GET /lecons/:slug` (brouillon ou en revue) | 404 | 404 | 404 | 404 | 404 |
 | `GET /medias/:fichier` | 200 | 200 | 200 | 200 | 200 |
+| `POST /lecons/:slug/vue` (compteur de lectures, dédoublonné par visiteur et par heure) | 204 | 204 | 204 | 204 | 204 |
 | `GET/POST/PATCH/DELETE /admin/chapitres…`, `/admin/lecons…` (création, édition, soumission, publication) | 401 | 403 | 403 | 403 | 2xx |
+| `POST /admin/lecons/:id/rejeter` (refus motivé, commentaire obligatoire) | 401 | 403 | 403 | 403 | 200 (400 sans commentaire) |
+| `GET /admin/revue` (file des leçons en revue) | 401 | 403 | 403 | 403 | 200 |
 | `POST /admin/medias` (téléversement d’image) | 401 | 403 | 403 | 403 | 201 |
+| `GET /studio` (ses leçons, statistiques, notifications), `GET /studio/chapitres` | 401 | 403 | 200 | 403 | 200 |
+| `POST /studio/lecons`, `POST /studio/apercu`, `POST /studio/medias` | 401 | 403 | 2xx | 403 | 2xx |
+| Lire, modifier, soumettre, supprimer (brouillon jamais publié) **sa** leçon — `/studio/lecons/:id…` | 401 | 403 | 2xx | 403 | 2xx |
+| Même chose sur la leçon **d’un autre** professeur | 401 | 403 | 404 | 403 | 2xx |
+| Modifier une leçon **en revue** (verrouillée) | 401 | 403 | 409 | 403 | 409 |
 | `GET /quiz/lecons/:slug`, démarrage et reprise d’une tentative | 401 | 200 | 200 | 200 | 200 |
 | `GET /quiz/tentatives` (son propre historique) | 401 | 200 | 200 | 200 | 200 |
 | Lire, remplir ou soumettre **sa** tentative | 401 | 2xx | 2xx | 2xx | 2xx |
@@ -50,13 +58,20 @@ exige une session, et `@Roles(...)` restreint en plus par rôle.
 | `/cours/:niveau/:matiere/:slug/quiz`, `/quiz/resultats/:id`, `/mes-quiz` | → `/connexion` | ✓ | ✓ | ✓ | ✓ |
 | `/tableau-de-bord` | → `/connexion` | ✓ | ✓ | ✓ | ✓ |
 | `/classement` | → `/connexion` | ✓ | → `/tableau-de-bord` | → idem | → idem |
-| `/admin` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
+| `/admin`, `/admin/revue`, `/admin/revue/:id` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
+| `/studio`, `/studio/lecons/:id` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | ✓ (ses leçons) | → idem | ✓ |
 
-C'est l'API qui fait autorité : la page `/admin` redirige sur la réponse 403 de l'API, pas sur une
-vérification côté front.
+C'est l'API qui fait autorité : les pages `/admin` et `/studio` redirigent sur la réponse 403 de
+l'API, pas sur une vérification côté front.
+
+**Circuit de publication par rôle** (`apps/api/src/contenus/workflow.ts`, testé unitairement) : un
+professeur crée, modifie et soumet **ses** leçons ; seule l'administration publie ou refuse. Un
+professeur qui tente de publier ou de refuser reçoit 403, et une leçon d'un autre auteur lui
+renvoie 404 (son existence n'est pas révélée).
 
 Les brouillons ne sont jamais servis par les routes publiques, admin compris : l’admin relit une
-copie de travail via `GET /admin/lecons/:id` et `GET /admin/lecons/:id/apercu`.
+copie de travail via `GET /admin/lecons/:id`, `GET /admin/lecons/:id/apercu` et
+`GET /studio/lecons/:id` (leçon et quiz de travail), le professeur via `GET /studio/lecons/:id`.
 
 ## Restrictions liées au compte (pas au rôle)
 

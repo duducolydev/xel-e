@@ -27,10 +27,12 @@ import {
   modifierChapitreSchema,
   modifierLeconSchema,
   NIVEAUX,
+  refusSchema,
   type CreerChapitreDto,
   type CreerLeconDto,
   type ModifierChapitreDto,
   type ModifierLeconDto,
+  type RefusDto,
 } from "@xel-e/shared";
 import type { Response } from "express";
 import { z } from "zod";
@@ -47,7 +49,7 @@ const filtreChapitresSchema = z.object({
 });
 
 @Catch(PayloadTooLargeException)
-class FiltreTailleMedia implements ExceptionFilter {
+export class FiltreTailleMedia implements ExceptionFilter {
   catch(_exception: PayloadTooLargeException, host: ArgumentsHost): void {
     host
       .switchToHttp()
@@ -111,26 +113,32 @@ export class AdminContenusController {
   modifierLecon(
     @Param("id", idValide) id: string,
     @Body(new ZodValidationPipe(modifierLeconSchema)) dto: ModifierLeconDto,
+    @CurrentUser() admin: UtilisateurAuthentifie,
   ) {
-    return this.publication.modifierLecon(id, dto);
+    return this.publication.modifierLecon(id, dto, admin);
   }
 
   @Post("lecons/:id/soumettre")
   @HttpCode(HttpStatus.OK)
-  soumettre(@Param("id", idValide) id: string) {
-    return this.publication.soumettre(id);
+  soumettre(@Param("id", idValide) id: string, @CurrentUser() admin: UtilisateurAuthentifie) {
+    return this.publication.soumettre(id, admin);
   }
 
-  @Post("lecons/:id/renvoyer-en-brouillon")
+  // Refus motivé d'une leçon en revue : elle revient en brouillon chez son auteur.
+  @Post("lecons/:id/rejeter")
   @HttpCode(HttpStatus.OK)
-  renvoyerEnBrouillon(@Param("id", idValide) id: string) {
-    return this.publication.renvoyerEnBrouillon(id);
+  rejeter(
+    @Param("id", idValide) id: string,
+    @Body(new ZodValidationPipe(refusSchema)) dto: RefusDto,
+    @CurrentUser() admin: UtilisateurAuthentifie,
+  ) {
+    return this.publication.rejeter(id, dto.commentaire, admin);
   }
 
   @Post("lecons/:id/publier")
   @HttpCode(HttpStatus.OK)
   publier(@Param("id", idValide) id: string, @CurrentUser() admin: UtilisateurAuthentifie) {
-    return this.publication.publier(id, admin.id);
+    return this.publication.publier(id, admin);
   }
 
   @Delete("lecons/:id")

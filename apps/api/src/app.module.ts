@@ -7,10 +7,12 @@ import { ContenusModule } from "./contenus/contenus.module";
 import { validateEnv } from "./config/env";
 import { HealthModule } from "./health/health.module";
 import { MailModule } from "./mail/mail.module";
+import { NotificationsModule } from "./notifications/notifications.service";
 import { PrismaModule } from "./prisma/prisma.module";
 import { ProgressionModule } from "./progression/progression.controller";
 import { QuizModule } from "./quiz/quiz.controller";
 import { RedisModule } from "./redis/redis.module";
+import { StudioModule } from "./studio/studio.controller";
 
 @Module({
   imports: [
@@ -22,12 +24,14 @@ import { RedisModule } from "./redis/redis.module";
     PrismaModule,
     RedisModule,
     MailModule,
+    NotificationsModule,
     HealthModule,
     AuthModule,
     AdminModule,
     ContenusModule,
     QuizModule,
     ProgressionModule,
+    StudioModule,
   ],
 })
 export class AppModule {}

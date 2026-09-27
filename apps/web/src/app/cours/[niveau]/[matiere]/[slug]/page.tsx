@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { BoutonTerminerLecon } from "@/components/bouton-terminer-lecon";
+import { CompteurVue } from "@/components/compteur-vue";
 import { EntetePublic } from "@/components/entete-public";
 import { FilAriane } from "@/components/fil-ariane";
 import { lirePublic, SITE_URL } from "@/lib/api-public";
@@ -74,6 +75,7 @@ function jsonLdLecon(lecon: LeconPubliee): string {
     datePublished: lecon.publieLe,
     url: `${SITE_URL}${cheminLecon(lecon)}`,
     publisher: { "@type": "Organization", name: "Xel-E" },
+    ...(lecon.auteur ? { author: { "@type": "Person", name: lecon.auteur } } : {}),
   }).replace(/</g, "\\u003c");
 }
 
@@ -121,6 +123,7 @@ export default async function PageLecon({
         <header className="space-y-2">
           <p className="text-sm font-medium uppercase tracking-wide text-brand-texte">{lecon.chapitre}</p>
           <h1 className="text-2xl font-bold text-brand-dark sm:text-3xl">{lecon.titre}</h1>
+          {lecon.auteur ? <p className="text-sm font-medium text-gray-700">Cours proposé par {lecon.auteur}</p> : null}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
             <span>
               Version {lecon.version} · publiée le {datePublication}
@@ -205,6 +208,7 @@ export default async function PageLecon({
           ) : null}
         </nav>
       </main>
+      <CompteurVue slug={lecon.slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdLecon(lecon) }} />
     </>
   );

@@ -1,6 +1,7 @@
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
+import type { NotificationsService } from "../notifications/notifications.service";
 import type { PrismaService } from "../prisma/prisma.service";
 import { PublicationService } from "./publication.service";
 
@@ -26,7 +27,8 @@ function creerService() {
       update: vi.fn().mockResolvedValue(undefined),
     },
   };
-  return { service: new PublicationService(prisma as unknown as PrismaService), prisma };
+  const notifications = { notifier: vi.fn(), notifierAdmins: vi.fn() } as unknown as NotificationsService;
+  return { service: new PublicationService(prisma as unknown as PrismaService, notifications), prisma };
 }
 
 describe("PublicationService — chapitres", () => {

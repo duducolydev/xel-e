@@ -18,6 +18,11 @@ import { FILTRE_LECONS_PUBLIQUES } from "./workflow";
 
 const LECON_INTROUVABLE = "Cette leçon n'existe pas ou n'est pas encore publiée.";
 
+// Seuls les professeurs sont crédités : les contenus de l'équipe (admins) restent anonymes.
+export function attribution(auteur: { role: string; nomComplet: string } | null): string | null {
+  return auteur?.role === "PROFESSEUR" ? `Pr ${auteur.nomComplet}` : null;
+}
+
 export interface VersionEnLigne {
   lecon: LeconPubliee;
   version: VersionLecon;
@@ -89,6 +94,7 @@ export class CatalogueService {
       where: { slug, ...FILTRE_LECONS_PUBLIQUES },
       include: {
         versionPubliee: true,
+        auteur: { select: { role: true, nomComplet: true } },
         quiz: { select: { deletedAt: true, _count: { select: { questions: true } } } },
         chapitre: {
           include: {
@@ -126,6 +132,7 @@ export class CatalogueService {
         chapitre: lecon.chapitre.titre,
         sections: version.sections as unknown as SectionLecon[],
         aUnQuiz: !!lecon.quiz && lecon.quiz.deletedAt === null && lecon.quiz._count.questions > 0,
+        auteur: attribution(lecon.auteur),
         precedente: voisines[position - 1] ?? null,
         suivante: voisines[position + 1] ?? null,
       },

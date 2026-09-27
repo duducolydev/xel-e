@@ -87,6 +87,8 @@ export interface LeconPubliee {
   chapitre: string;
   sections: SectionLecon[];
   aUnQuiz: boolean;
+  // « Pr X » pour une leçon proposée par un professeur, null pour les contenus de l'équipe.
+  auteur: string | null;
   precedente: LeconResumee | null;
   suivante: LeconResumee | null;
 }

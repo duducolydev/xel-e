@@ -285,3 +285,47 @@ pour les quatre premiers.
   la note est enregistrée d'abord, l'incident est journalisé.
 
 **Date** : 2026-09-26 — Phase 5.
+
+---
+
+## D0016 — Studio professeur et circuit de validation
+
+**Contexte** : Phase 6 du brief. Périmètre de création tranché par le porteur du projet le
+2026-09-26 ; le reste découle du brief et des choix des phases 3 et 4.
+
+**Décisions** :
+- **Périmètre** : un professeur crée des **leçons** dans les **chapitres existants** ; la structure du
+  programme (chapitres) reste à l'administration.
+- **Machine à états par rôle** : BROUILLON → (soumettre) → EN_REVUE → (publier) → PUBLIE, ou
+  EN_REVUE → (refuser) → BROUILLON. Le professeur peut modifier et soumettre ; seule
+  l'administration publie ou refuse (403 sinon). Une leçon EN_REVUE est verrouillée pour tout le
+  monde, admin compris : on la refuse pour la faire corriger. L'ancienne action « renvoyer en
+  brouillon » sans motif disparaît au profit du refus.
+- **Refus motivé** : commentaire obligatoire (10 à 2 000 caractères), conservé avec la leçon
+  (historique des refus visible par l'auteur et par l'admin qui relit).
+- **Propriété** : un professeur ne voit et ne modifie que ses propres leçons ; celles des autres lui
+  répondent 404. Il peut supprimer un brouillon **jamais publié** ; une leçon en ligne ne se supprime
+  pas depuis le studio.
+- **Quiz relu avec la leçon** : le quiz édité dans le studio est stocké comme brouillon sur la leçon
+  et n'est appliqué au quiz en ligne qu'à la publication, dans la même transaction que la nouvelle
+  version. Les questions conservées gardent leur identifiant (une tentative en cours garde ses
+  réponses), les questions retirées sont supprimées, un quiz vidé est retiré du site (l'historique
+  des tentatives reste consultable). Les corrigés déjà rendus ne changent pas (figés à la
+  soumission, D0014).
+- **Notifications in-app** : l'auteur est prévenu de chaque changement de statut décidé par
+  quelqu'un d'autre (soumission faite pour lui, refus avec le commentaire, publication,
+  réouverture d'une leçon publiée par l'admin) ; les administrateurs sont prévenus de chaque
+  nouvelle soumission. Personne n'est notifié de sa propre action. Un échec d'envoi est journalisé
+  sans faire échouer l'action.
+- **Statistiques professeur** (leçons en ligne uniquement) : **vues** = visiteurs distincts par
+  heure (empreinte hachée IP + navigateur conservée une heure dans Redis, jamais en clair ; sans
+  Redis, la vue n'est pas comptée plutôt que comptée en double) ; **taux de réussite** = part des
+  quiz terminés **par des élèves** avec au moins 60 % ; **score moyen** sur ces mêmes tentatives.
+  Les totaux sont pondérés par le nombre de tentatives.
+- **Attribution** : « Cours proposé par Pr *Nom complet* » sur la leçon (et `author` dans les
+  données structurées) quand l'auteur est un professeur ; les contenus de l'équipe (admins, seed)
+  restent sans attribution.
+- **Aperçu** : même moteur de rendu que la publication (Markdown + KaTeX, HTML assaini), appelé à la
+  demande ; les professeurs peuvent téléverser des images avec les mêmes contrôles que l'admin.
+
+**Date** : 2026-09-26 — Phase 6.
