@@ -64,14 +64,14 @@ enum TypeJetonVerification {
 // ---------------------------------------------------------------------------
 
 model User {
-  id             String  @id @default(uuid())
-  email          String? @unique
-  identifiant    String? @unique
-  motDePasseHash String
-  role           Role
-  nomComplet     String
-  pseudonyme     String? @unique
-  statutCompte   StatutCompte @default(ACTIF)
+  id              String       @id @default(uuid())
+  email           String?      @unique
+  identifiant     String?      @unique
+  motDePasseHash  String
+  role            Role
+  nomComplet      String
+  pseudonyme      String?      @unique
+  statutCompte    StatutCompte @default(ACTIF)
   emailConfirmeLe DateTime?
 
   niveauId String?
@@ -96,20 +96,21 @@ model User {
   refreshTokens      RefreshToken[]
   jetonsVerification JetonVerification[]
 
-  enfants          ParentLink[]      @relation("ParentDeUser")
-  parents          ParentLink[]      @relation("EnfantDeUser")
-  progressions     Progression[]
-  tentatives       Tentative[]
-  badges           BadgeUtilisateur[]
-  sujetsForum      SujetForum[]
-  messages         Message[]
-  signalements     Signalement[]
-  abonnements      Abonnement[]
-  notifications    Notification[]
-  leconsRedigees   Lecon[]
-  versionsPubliees VersionLecon[]    @relation("VersionsPubliees")
-  gainsXp          GainXp[]
+  enfants           ParentLink[]       @relation("ParentDeUser")
+  parents           ParentLink[]       @relation("EnfantDeUser")
+  progressions      Progression[]
+  tentatives        Tentative[]
+  badges            BadgeUtilisateur[]
+  sujetsForum       SujetForum[]
+  messages          Message[]
+  signalements      Signalement[]
+  abonnements       Abonnement[]
+  notifications     Notification[]
+  leconsRedigees    Lecon[]
+  versionsPubliees  VersionLecon[]     @relation("VersionsPubliees")
+  gainsXp           GainXp[]
   commentairesRevue CommentaireRevue[] @relation("CommentairesRevue")
+  piecesJointes     PieceJointe[]
 
   @@index([role])
   @@index([niveauId])
@@ -128,15 +129,15 @@ model ParentLink {
 }
 
 model RefreshToken {
-  id           String    @id @default(uuid())
-  userId       String
-  user         User      @relation(fields: [userId], references: [id])
-  familleId    String
-  tokenHash    String    @unique
-  expireLe     DateTime
-  revoqueLe    DateTime?
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  familleId     String
+  tokenHash     String    @unique
+  expireLe      DateTime
+  revoqueLe     DateTime?
   remplaceParId String?
-  createdAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
 
   @@index([userId])
   @@index([familleId])
@@ -196,27 +197,27 @@ model Chapitre {
 }
 
 model Lecon {
-  id          String      @id @default(uuid())
-  chapitreId  String
-  chapitre    Chapitre    @relation(fields: [chapitreId], references: [id])
-  slug        String      @unique
-  titre       String
-  contenu     String?
-  statut      StatutLecon @default(BROUILLON)
+  id            String      @id @default(uuid())
+  chapitreId    String
+  chapitre      Chapitre    @relation(fields: [chapitreId], references: [id])
+  slug          String      @unique
+  titre         String
+  contenu       String?
+  statut        StatutLecon @default(BROUILLON)
   // Numéro de la dernière version publiée (0 = jamais publiée).
-  version     Int         @default(0)
-  ordre       Int
-  auteurId    String?
-  auteur      User?       @relation(fields: [auteurId], references: [id])
+  version       Int         @default(0)
+  ordre         Int
+  auteurId      String?
+  auteur        User?       @relation(fields: [auteurId], references: [id])
   // Quiz de la copie de travail, au format de l'éditeur ; appliqué au quiz en ligne à la publication
   // (null = pas de modification en cours).
   quizBrouillon Json?
   soumisLe      DateTime?
   // Lectures comptées une fois par visiteur et par heure.
-  vues          Int       @default(0)
+  vues          Int         @default(0)
 
-  versionPublieeId String?       @unique
-  versionPubliee   VersionLecon? @relation("VersionPubliee", fields: [versionPublieeId], references: [id])
+  versionPublieeId String?        @unique
+  versionPubliee   VersionLecon?  @relation("VersionPubliee", fields: [versionPublieeId], references: [id])
   versions         VersionLecon[] @relation("VersionsLecon")
 
   deletedAt DateTime?
@@ -267,10 +268,10 @@ model VersionLecon {
 // ---------------------------------------------------------------------------
 
 model Quiz {
-  id        String  @id @default(uuid())
-  leconId   String  @unique
-  lecon     Lecon   @relation(fields: [leconId], references: [id])
-  dureeMax  Int?
+  id       String @id @default(uuid())
+  leconId  String @unique
+  lecon    Lecon  @relation(fields: [leconId], references: [id])
+  dureeMax Int?
 
   deletedAt DateTime?
   createdAt DateTime  @default(now())
@@ -281,42 +282,42 @@ model Quiz {
 }
 
 model Question {
-  id               String       @id @default(uuid())
-  quizId           String
-  quiz             Quiz         @relation(fields: [quizId], references: [id])
-  type             TypeQuestion
-  enonce           String
-  choix            Json?
-  reponseCorrecte  Json
+  id              String       @id @default(uuid())
+  quizId          String
+  quiz            Quiz         @relation(fields: [quizId], references: [id])
+  type            TypeQuestion
+  enonce          String
+  choix           Json?
+  reponseCorrecte Json
   // Affichée avec le corrigé, jamais avant la soumission.
-  explication      String?
-  bareme           Int          @default(1)
-  ordre            Int
+  explication     String?
+  bareme          Int          @default(1)
+  ordre           Int
 
   @@index([quizId])
 }
 
 model Tentative {
-  id           String    @id @default(uuid())
-  quizId       String
-  quiz         Quiz      @relation(fields: [quizId], references: [id])
+  id            String    @id @default(uuid())
+  quizId        String
+  quiz          Quiz      @relation(fields: [quizId], references: [id])
   utilisateurId String
-  utilisateur  User      @relation(fields: [utilisateurId], references: [id])
-  reponses     Json?
+  utilisateur   User      @relation(fields: [utilisateurId], references: [id])
+  reponses      Json?
   // Index de la question affichée, pour reprendre au même endroit.
-  position     Int       @default(0)
+  position      Int       @default(0)
   // "<utilisateurId>:<quizId>" tant que la tentative est en cours, null ensuite :
   // l'unicité garantit au plus une tentative en cours par élève et par quiz.
-  enCoursCle   String?   @unique
-  score        Float?
+  enCoursCle    String?   @unique
+  score         Float?
   pointsObtenus Float?
-  pointsTotal  Float?
+  pointsTotal   Float?
   // Corrigé figé à la soumission : l'historique ne change pas si le quiz est modifié ensuite.
-  correction   Json?
+  correction    Json?
   // XP rapportée par cette tentative (quiz réussi ou sans faute pour la première fois).
-  xpGagne      Int       @default(0)
-  demarreLe    DateTime  @default(now())
-  termineLe    DateTime?
+  xpGagne       Int       @default(0)
+  demarreLe     DateTime  @default(now())
+  termineLe     DateTime?
 
   @@index([quizId])
   @@index([utilisateurId, termineLe])
@@ -361,8 +362,8 @@ model GainXp {
 }
 
 model Badge {
-  id          String @id @default(uuid())
-  code        String @unique
+  id          String  @id @default(uuid())
+  code        String  @unique
   libelle     String
   description String?
 
@@ -385,14 +386,16 @@ model BadgeUtilisateur {
 // ---------------------------------------------------------------------------
 
 model SujetForum {
-  id        String   @id @default(uuid())
-  niveauId  String
-  niveau    Niveau   @relation(fields: [niveauId], references: [id])
-  matiereId String
-  matiere   Matiere  @relation(fields: [matiereId], references: [id])
-  titre     String
-  auteurId  String
-  auteur    User     @relation(fields: [auteurId], references: [id])
+  id               String   @id @default(uuid())
+  niveauId         String
+  niveau           Niveau   @relation(fields: [niveauId], references: [id])
+  matiereId        String
+  matiere          Matiere  @relation(fields: [matiereId], references: [id])
+  titre            String
+  auteurId         String
+  auteur           User     @relation(fields: [auteurId], references: [id])
+  // Tri des sujets par activité récente.
+  dernierMessageLe DateTime @default(now())
 
   deletedAt DateTime?
   createdAt DateTime  @default(now())
@@ -400,36 +403,69 @@ model SujetForum {
 
   messages Message[]
 
-  @@index([niveauId, matiereId])
+  @@index([niveauId, matiereId, dernierMessageLe])
 }
 
 model Message {
-  id       String     @id @default(uuid())
-  sujetId  String
-  sujet    SujetForum @relation(fields: [sujetId], references: [id])
-  auteurId String
-  auteur   User       @relation(fields: [auteurId], references: [id])
-  contenu  String
-  masque   Boolean    @default(false)
+  id        String     @id @default(uuid())
+  sujetId   String
+  sujet     SujetForum @relation(fields: [sujetId], references: [id])
+  auteurId  String
+  auteur    User       @relation(fields: [auteurId], references: [id])
+  contenu   String
+  // Masqué automatiquement au 3e signalement, en attendant la décision de la modération.
+  masque    Boolean    @default(false)
+  masqueLe  DateTime?
+  // Innocenté par la modération : de nouveaux signalements ne le masquent plus automatiquement.
+  verifieLe DateTime?
 
+  // Suppression par la modération (le texte reste en base pour l'historique de modération).
   deletedAt DateTime?
   createdAt DateTime  @default(now())
 
-  signalements Signalement[]
+  signalements  Signalement[]
+  piecesJointes PieceJointe[]
 
-  @@index([sujetId])
+  @@index([sujetId, createdAt])
 }
 
 model Signalement {
-  id           String   @id @default(uuid())
-  messageId    String
-  message      Message  @relation(fields: [messageId], references: [id])
-  signalantId  String
-  signalant    User     @relation(fields: [signalantId], references: [id])
-  motif        String?
-  createdAt    DateTime @default(now())
+  id          String    @id @default(uuid())
+  messageId   String
+  message     Message   @relation(fields: [messageId], references: [id])
+  signalantId String
+  signalant   User      @relation(fields: [signalantId], references: [id])
+  motif       String?
+  createdAt   DateTime  @default(now())
+  // Soldé par une décision de la modération (message restauré ou supprimé).
+  traiteLe    DateTime?
 
   @@unique([messageId, signalantId])
+  @@index([traiteLe])
+}
+
+// Image ou PDF analysé par l'antivirus avant stockage ; rattaché à un message à sa publication.
+model PieceJointe {
+  id          String   @id @default(uuid())
+  auteurId    String
+  auteur      User     @relation(fields: [auteurId], references: [id])
+  messageId   String?
+  message     Message? @relation(fields: [messageId], references: [id])
+  cle         String   @unique
+  nomOriginal String
+  type        String
+  taille      Int
+  createdAt   DateTime @default(now())
+
+  @@index([messageId])
+  @@index([auteurId])
+}
+
+// Filtre de premier niveau du forum, éditable par l'administration.
+model TermeInterdit {
+  id        String   @id @default(uuid())
+  terme     String   @unique
+  createdAt DateTime @default(now())
 }
 
 // ---------------------------------------------------------------------------
@@ -437,11 +473,11 @@ model Signalement {
 // ---------------------------------------------------------------------------
 
 model Abonnement {
-  id            String            @id @default(uuid())
+  id            String           @id @default(uuid())
   utilisateurId String
-  utilisateur   User              @relation(fields: [utilisateurId], references: [id])
+  utilisateur   User             @relation(fields: [utilisateurId], references: [id])
   plan          String
-  statut        StatutAbonnement  @default(ACTIF)
+  statut        StatutAbonnement @default(ACTIF)
   expireLe      DateTime?
 
   createdAt DateTime @default(now())

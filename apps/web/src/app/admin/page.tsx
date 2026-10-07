@@ -34,6 +34,10 @@ export default async function PageAdmin() {
           <Link href="/admin/revue" className="font-semibold text-brand-dark underline underline-offset-4">
             Leçons à relire
           </Link>
+          {" · "}
+          <Link href="/admin/moderation" className="font-semibold text-brand-dark underline underline-offset-4">
+            Modération du forum
+          </Link>
         </p>
         <section>
           <h2 className="mb-3 text-lg font-semibold text-gray-900">Professeurs en attente de validation</h2>

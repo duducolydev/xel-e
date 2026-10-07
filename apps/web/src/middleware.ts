@@ -50,6 +50,7 @@ export const config = {
     "/tableau-de-bord/:path*",
     "/admin/:path*",
     "/studio/:path*",
+    "/forum/:path*",
     "/cours/:niveau/:matiere/:slug/quiz",
     "/quiz/:path*",
     "/mes-quiz",

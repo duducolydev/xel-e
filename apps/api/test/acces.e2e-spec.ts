@@ -144,6 +144,46 @@ const MATRICE: Ligne[] = [
     attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 400, PARENT: 403, ADMIN: 400 },
   },
   {
+    methode: "get",
+    chemin: "/forum/etat",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 200, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: "/forum/niveaux/3e/maths",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 200, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "post",
+    chemin: "/forum/sujets",
+    attendu: { anonyme: 401, ELEVE: 400, PROFESSEUR: 400, PARENT: 403, ADMIN: 400 },
+  },
+  {
+    methode: "get",
+    chemin: `/forum/sujets/${randomUUID()}`,
+    attendu: { anonyme: 401, ELEVE: 404, PROFESSEUR: 404, PARENT: 403, ADMIN: 404 },
+  },
+  {
+    methode: "post",
+    chemin: "/forum/pieces-jointes",
+    attendu: { anonyme: 401, ELEVE: 400, PROFESSEUR: 400, PARENT: 403, ADMIN: 400 },
+  },
+  {
+    methode: "get",
+    chemin: "/admin/moderation",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "post",
+    chemin: "/admin/moderation/termes",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 400 },
+  },
+  {
+    methode: "post",
+    chemin: `/admin/moderation/messages/${randomUUID()}/restaurer`,
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 404 },
+  },
+  {
     methode: "post",
     chemin: `/lecons/${LECON_DEMO.slug}/vue`,
     attendu: { anonyme: 204, ELEVE: 204, PROFESSEUR: 204, PARENT: 204, ADMIN: 204 },

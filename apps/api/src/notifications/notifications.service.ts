@@ -2,7 +2,7 @@ import { Global, Injectable, Logger, Module } from "@nestjs/common";
 import type { NotificationEleve } from "@xel-e/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
-export type TypeNotification = "BADGE" | "REVUE";
+export type TypeNotification = "BADGE" | "REVUE" | "FORUM" | "MODERATION";
 
 // Notifications in-app. Un échec d'envoi est journalisé sans faire échouer l'action qui l'a déclenché.
 @Injectable()

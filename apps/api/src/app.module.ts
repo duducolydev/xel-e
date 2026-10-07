@@ -5,6 +5,7 @@ import { AdminModule } from "./admin/admin.module";
 import { AuthModule } from "./auth/auth.module";
 import { ContenusModule } from "./contenus/contenus.module";
 import { validateEnv } from "./config/env";
+import { ForumModule } from "./forum/forum.controller";
 import { HealthModule } from "./health/health.module";
 import { MailModule } from "./mail/mail.module";
 import { NotificationsModule } from "./notifications/notifications.service";
@@ -32,6 +33,7 @@ import { StudioModule } from "./studio/studio.controller";
     QuizModule,
     ProgressionModule,
     StudioModule,
+    ForumModule,
   ],
 })
 export class AppModule {}

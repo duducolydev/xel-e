@@ -8,3 +8,4 @@ export * from "./contenus";
 export * from "./quiz";
 export * from "./progression";
 export * from "./studio";
+export * from "./forum";

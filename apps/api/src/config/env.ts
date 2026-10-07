@@ -18,6 +18,8 @@ export const envSchema = z.object({
   SMTP_HOST: z.string().min(1),
   SMTP_PORT: z.coerce.number().int().positive(),
   MAIL_FROM: z.string().min(1).default("Xel-E <no-reply@xele.sn>"),
+  CLAMAV_HOST: z.string().min(1).default("127.0.0.1"),
+  CLAMAV_PORT: z.coerce.number().int().positive().default(3310),
 });
 
 export type Env = z.infer<typeof envSchema>;

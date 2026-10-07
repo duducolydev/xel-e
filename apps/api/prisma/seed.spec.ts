@@ -10,6 +10,7 @@ import {
   NIVEAUX_SEED,
   seedAll,
 } from "./seed";
+import { TERMES_INITIAUX } from "../src/forum/termes-initiaux";
 
 function makeUpsertModel(keyOf: (where: unknown) => string) {
   const store = new Map<string, Record<string, unknown>>();
@@ -44,6 +45,7 @@ function createMockPrisma() {
   const user = makeUpsertModel((w) => (w as { email: string }).email);
   const versions: Record<string, unknown>[] = [];
   const questions: Record<string, unknown>[] = [];
+  const termes = new Set<string>();
 
   // Comme en base, une leçon créée sans « version » est à 0 (jamais publiée).
   const lecons = () => [...lecon.store.values()];
@@ -74,9 +76,15 @@ function createMockPrisma() {
       }),
     },
     user: { upsert: user.upsert },
+    termeInterdit: {
+      createMany: vi.fn(async ({ data }: { data: { terme: string }[] }) => {
+        for (const { terme } of data) termes.add(terme);
+        return { count: data.length };
+      }),
+    },
   } as unknown as PrismaClient;
 
-  const stores = { niveau, matiere, chapitre, lecon, quiz, user, versions, questions };
+  const stores = { niveau, matiere, chapitre, lecon, quiz, user, versions, questions, termes };
 
   return { prisma, stores };
 }
@@ -138,6 +146,15 @@ describe("seedAll", { timeout: 30_000 }, () => {
 
     expect(stores.versions).toHaveLength(versionsApresPremierPassage);
     expect(stores.questions).toHaveLength(questionsApresPremierPassage);
+  });
+
+  it("installe la liste de départ du filtre du forum, sans doublon au second passage", async () => {
+    const { prisma, stores } = createMockPrisma();
+
+    await seedAll(prisma);
+    await seedAll(prisma);
+
+    expect([...stores.termes].sort()).toEqual([...TERMES_INITIAUX].sort());
   });
 
   it("est idempotent : relancer le seed ne duplique rien", async () => {

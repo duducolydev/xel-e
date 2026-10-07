@@ -61,7 +61,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # Antivirus des pièces jointes du forum (protocole clamd, port 3310). Le premier démarrage charge
+  # les signatures (1 à 2 min) ; prévoir ~1,5 Go de RAM.
+  clamav:
+    image: clamav/clamav:stable
+    restart: unless-stopped
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+
 volumes:
+  clamav-data:
   postgres-data:
   redis-data:
   minio-data:

@@ -8,6 +8,8 @@ export async function viderBase(prisma: PrismaClient): Promise<void> {
   await prisma.refreshToken.deleteMany();
   await prisma.jetonVerification.deleteMany();
   await prisma.signalement.deleteMany();
+  await prisma.pieceJointe.deleteMany();
+  await prisma.termeInterdit.deleteMany();
   await prisma.message.deleteMany();
   await prisma.sujetForum.deleteMany();
   await prisma.badgeUtilisateur.deleteMany();

@@ -89,6 +89,11 @@ export default async function PageTableauDeBord({
                 ? "Ton accès au forum est ouvert."
                 : "Ton accès au forum n'est pas encore ouvert."}
             </p>
+            {utilisateur.role !== "PARENT" ? (
+              <Link href="/forum" className="mt-3 inline-block font-semibold text-brand-dark underline underline-offset-4">
+                Ouvrir le forum
+              </Link>
+            ) : null}
           </div>
         </section>
       </main>

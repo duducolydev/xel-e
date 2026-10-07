@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerAccesForum, consentementParentalRequis, type ProfilAcces } from "./acces-forum";
+import { calculerAccesForum, consentementParentalRequis, raisonFermetureForum, type ProfilAcces } from "./acces-forum";
 
 const maintenant = new Date("2026-09-26T10:00:00Z");
 
@@ -52,5 +52,29 @@ describe("règle mineur : accès au forum", () => {
   it("ne demande jamais de consentement parental hors élèves", () => {
     const parent: ProfilAcces = { ...eleve({ naissanceAnnee: 2013 }), role: "PARENT" };
     expect(consentementParentalRequis(parent, maintenant)).toBe(false);
+  });
+});
+
+describe("forum : raison affichée quand il est fermé", () => {
+  it("aucune raison quand le compte remplit les conditions", () => {
+    expect(raisonFermetureForum(eleve(), maintenant)).toBeNull();
+    expect(raisonFermetureForum(eleve({ role: "PROFESSEUR" }), maintenant)).toBeNull();
+    expect(raisonFermetureForum(eleve({ role: "ADMIN" }), maintenant)).toBeNull();
+  });
+
+  it("réservé aux élèves et aux professeurs : pas de parents", () => {
+    expect(raisonFermetureForum(eleve({ role: "PARENT" }), maintenant)).toMatch(/réservé/);
+  });
+
+  it("explique chaque condition manquante, dans l'ordre où l'utilisateur peut agir", () => {
+    expect(raisonFermetureForum(eleve({ statutCompte: "EN_ATTENTE_VALIDATION" }), maintenant)).toMatch(/pas encore validé/);
+    expect(raisonFermetureForum(eleve({ email: "a@example.sn" }), maintenant)).toMatch(/Confirme ton adresse email/);
+    expect(raisonFermetureForum(eleve({ naissanceAnnee: 2013 }), maintenant)).toMatch(/ton parent/);
+  });
+
+  it("concorde avec le calcul d'accès pour un élève", () => {
+    for (const profil of [eleve(), eleve({ naissanceAnnee: 2013 }), eleve({ email: "a@example.sn" })]) {
+      expect(raisonFermetureForum(profil, maintenant) === null).toBe(calculerAccesForum(profil, maintenant));
+    }
   });
 });

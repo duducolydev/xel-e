@@ -329,3 +329,43 @@ pour les quatre premiers.
   demande ; les professeurs peuvent téléverser des images avec les mêmes contrôles que l'admin.
 
 **Date** : 2026-09-26 — Phase 6.
+
+---
+
+## D0017 — Forum modéré
+
+**Contexte** : Phase 7 du brief. Quatre choix tranchés par le porteur du projet le 2026-10-07 ; le reste
+découle du brief (mineurs, protection des données) et des phases précédentes.
+
+**Décisions** :
+- **Accès** : élèves, professeurs et administration ; **pas les parents** (ils suivront leurs enfants
+  dans l'espace parent, Phase 8). Lecture comprise, le forum est fermé tant que le compte ne remplit
+  pas les conditions de la Phase 2 (email confirmé, accord parental sous 15 ans) ; la page explique
+  pourquoi. Le forum n'est pas public (pas de référencement).
+- **Pseudonyme obligatoire** pour publier (le même que celui du classement, unique). L'API publique
+  ne renvoie qu'un pseudonyme et un badge (« Professeur », « Équipe Xel-E ») : jamais de nom, d'email
+  ni d'identifiant de compte.
+- **Pièces jointes** : images et PDF, 5 Mo max., 3 par message, type vérifié sur les octets.
+  **Antivirus ClamAV** (service `clamav` de docker-compose et de la CI, protocole clamd) appelé
+  **avant** tout stockage ; en cas d'indisponibilité, le fichier est **refusé** (503) plutôt
+  qu'accepté sans contrôle. Les PDF sont toujours téléchargés, jamais affichés dans la page.
+- **Filtre de premier niveau** : liste de termes **en français** fournie au départ (migration et
+  seed), **éditable par l'administration** (termes en wolof à ajouter par l'équipe) ; mots entiers,
+  insensible aux accents, à la casse, aux chiffres « leet » et aux lettres répétées. Liens externes
+  refusés pour les élèves (sauf vers Xel-E), permis aux professeurs. Message refusé avec explication
+  plutôt que publié puis masqué.
+- **Signalements** : un par compte et par message ; masquage automatique au 3e (comptes distincts) ;
+  l'auteur voit son message masqué avec une explication, les autres un texte neutre.
+- **Message innocenté** : il réapparaît, ses signalements sont soldés et il est marqué « vérifié » :
+  de nouveaux signalements remontent dans la file **sans le masquer automatiquement** (évite qu'un
+  groupe fasse masquer en boucle un message légitime).
+- **Suppression** : douce (le texte reste en base pour l'historique), remplacée publiquement par
+  « Message supprimé par la modération » ; l'auteur est notifié. L'admin peut aussi retirer un sujet.
+- **Anti-flood** : 20 messages par compte par tranche de 10 minutes (Redis, sans blocage si Redis
+  est indisponible).
+- **Pas d'édition ni de suppression par l'auteur** en Phase 7 (à rediscuter) ; fil de discussion à
+  plat (pas de réponses imbriquées).
+- Notifications in-app : réponse à son sujet, suppression de son message ; admins prévenus d'un
+  masquage automatique.
+
+**Date** : 2026-10-07 — Phase 7.

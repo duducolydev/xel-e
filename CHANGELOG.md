@@ -368,3 +368,63 @@ porté à 30 s pour ce seul bloc.
   leçon + réussir son quiz » a été renvoyé vers la connexion en plein quiz (session perdue avec le
   TTL d'accès de 20 s des e2e) ; il repasse seul (3/3) et le reste de la suite est vert (19/20).
   Cause non identifiée, code d'authentification non modifié en Phase 6 : à surveiller en CI.
+
+---
+
+## Phase 7 — Forum modéré
+
+**Fait** :
+- Migration `20261007144619_forum` (réversible, `down.sql` testé) : pièces jointes, termes
+  interdits (liste de départ insérée par la migration), état de modération des messages (masqué,
+  vérifié), signalements soldés, tri des sujets par activité.
+- Forum par niveau et par matière (`/forum`) : sujets, réponses, jusqu'à 3 pièces jointes par
+  message (images et PDF, 5 Mo), badge « Professeur » et « Équipe Xel-E », notification à l'auteur
+  d'un sujet quand on lui répond.
+- Mineurs : pseudonyme obligatoire pour publier, jamais de nom ni d'email exposés ; forum fermé
+  (lecture comprise, avec explication) tant que l'email n'est pas confirmé ou, sous 15 ans, que le
+  parent n'a pas donné son accord ; réservé aux élèves, professeurs et administration.
+- Antivirus **ClamAV** (service ajouté à docker-compose et à la CI) sur chaque pièce jointe avant
+  stockage, en mode « refus si indisponible » ; type vérifié sur les octets ; fichiers stockés sous
+  un nom aléatoire et servis sans possibilité de script.
+- Filtre de premier niveau : termes interdits (mots entiers, insensible aux accents, à la casse, aux
+  chiffres déguisés et aux lettres répétées) et liens externes bloqués pour les élèves ; anti-flood
+  de 20 messages par compte et par tranche de 10 minutes.
+- Signalement en un clic (motif facultatif), masquage automatique au 3e signalement de comptes
+  distincts ; file de modération `/admin/moderation` (masqués d'abord) : innocenter et rétablir,
+  supprimer un message ou un sujet, gérer la liste des termes interdits.
+- Charte : `DOCS/moderation.md` (équipe de modération) et `/forum/charte` (élèves).
+- Liens « Forum » dans l'en-tête et le tableau de bord.
+
+**Décisions** : `DOCS/decisions.md` D0017 — ClamAV en refus si indisponible, liste de termes en
+français éditable par l'admin, message innocenté protégé du masquage automatique, forum sans
+parents (choix du porteur du projet) ; pas d'édition ni de suppression par l'auteur pour l'instant.
+
+**Tests** :
+- Unitaires (420 côté API) : filtre de contenu — termes bloqués et variantes (accents, casse,
+  chiffres, lettres répétées, expressions), détection de liens, **faux positifs documentés**
+  (« dispute », « pdf », « TGV », « sexe » en SVT, « chatte » l'animal…), liste de départ présente
+  dans la migration ; **règle des 3 signalements** (masquage au 3e, pas avant, pas de re-masquage
+  d'un message innocenté, réapparition après innocence) ; **sérialisation publique** sans aucun
+  champ personnel (email, nom, identifiant, id de compte, clé de stockage) ; protocole clamd et
+  refus si l'antivirus est indisponible ; pièces jointes (type par les octets, fichier infecté jamais
+  stocké, droits de lecture) ; accès (raison de fermeture), pseudonyme, anti-flood, signalements,
+  décisions de modération, liste de termes.
+- e2e API (256 au total, contre le vrai ClamAV) : parcours complet sujet → pièce jointe (fichier de
+  test EICAR refusé) → réponses → filtre → 3 signalements → masquage → innocence → suppression →
+  termes ajoutés par l'admin → sujet retiré ; aucune donnée personnelle dans les réponses de l'API ;
+  moins de 15 ans sans accord parental, email non confirmé, parents et visiteurs refusés ; matrice
+  d'accès étendue à 165 cas.
+- e2e Playwright (22 au total) : un élève crée un sujet → un autre répond → trois comptes distincts
+  le signalent → la réponse est masquée → l'admin la rétablit ; un élève de moins de 15 ans sans
+  accord parental ne voit pas le forum.
+
+**Validation** : charte de modération à relire dans `DOCS/moderation.md`.
+
+**Dette éventuelle** :
+- Les pièces jointes téléversées mais jamais publiées ne sont pas encore purgées.
+- Pas d'édition ni de suppression d'un message par son auteur ; pas de suspension de compte depuis
+  la modération (prévu avec l'espace parent et la gestion des utilisateurs).
+- Le filtre ne voit pas les insultes écrites lettre par lettre ni le contenu des images : ces cas
+  reposent sur les signalements.
+- ClamAV demande ~1,5 Go de RAM et 1 à 2 min de démarrage (signatures) ; à dimensionner en
+  production.

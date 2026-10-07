@@ -2,6 +2,7 @@ import { Prisma, PrismaClient, Role, StatutCompte, StatutLecon } from "@prisma/c
 import { INFOS_MATIERES, type Matiere } from "@xel-e/shared";
 import { hasherMotDePasse } from "../src/auth/password";
 import { rendreLecon } from "../src/contenus/rendu-markdown";
+import { TERMES_INITIAUX } from "../src/forum/termes-initiaux";
 import { CHAPITRE_DEMO, contenuGenerique, LECON_DEMO, QUIZ_DEMO, questionsGeneriques } from "./contenus-demo";
 
 export { LECON_DEMO, QUIZ_DEMO };
@@ -193,6 +194,11 @@ export async function seedPublication(prisma: PrismaClient, publieParId: string 
   }
 }
 
+// Liste de départ du filtre du forum (également insérée par la migration « forum » en production).
+export async function seedTermesInterdits(prisma: PrismaClient) {
+  await prisma.termeInterdit.createMany({ data: TERMES_INITIAUX.map((terme) => ({ terme })), skipDuplicates: true });
+}
+
 export async function seedAll(prisma: PrismaClient) {
   const niveaux = await seedNiveaux(prisma);
   const matieres = await seedMatieres(prisma);
@@ -202,4 +208,5 @@ export async function seedAll(prisma: PrismaClient) {
   const comptes = await seedComptesDemo(prisma, troisieme.id);
   const admin = comptes.find((compte) => compte.role === Role.ADMIN);
   await seedPublication(prisma, admin?.id ?? null);
+  await seedTermesInterdits(prisma);
 }

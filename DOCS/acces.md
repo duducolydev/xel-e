@@ -1,6 +1,6 @@
 # Matrice d'accès — rôle × ressource
 
-État à la fin de la Phase 6. Chaque ligne est vérifiée automatiquement :
+État à la fin de la Phase 7. Chaque ligne est vérifiée automatiquement :
 
 - API : `apps/api/test/acces.e2e-spec.ts` rejoue la matrice ci-dessous avec les comptes de démo
   (`MATRICE` dans le test ⇔ tableau « API » de ce document, à garder identiques).
@@ -42,6 +42,13 @@ Légende : **200/204** autorisé · **401** non connecté · **403** connecté m
 | Lire, remplir ou soumettre la tentative **d’un autre** | 401 | 404 | 404 | 404 | 404 |
 | `GET /progression/tableau-de-bord`, `GET /progression/classement`, `POST /progression/lecons/:slug/terminer` | 401 | 200 | 200 | 200 | 200 |
 | `PUT /progression/classement` (participer au classement) | 401 | 204 | 403 | 403 | 403 |
+| `GET /forum/etat` (forum ouvert ou non à ce compte, et pourquoi) | 401 | 200 | 200 | 403 | 200 |
+| Lire le forum, publier, signaler, téléverser une pièce jointe — `/forum…` | 401 | 2xx ¹ | 2xx | 403 | 2xx |
+| `GET /forum/pieces-jointes/:id` (message masqué ou supprimé) | 401 | 404 (sauf son auteur) | 404 (idem) | 403 | 200 |
+| `/admin/moderation…` (file, innocenter, supprimer, termes interdits) | 401 | 403 | 403 | 403 | 2xx |
+
+¹ Élève : 403 tant que son email n'est pas confirmé, ou, s'il a moins de 15 ans, tant que son
+parent n'a pas donné son accord (message explicite). Publier exige en plus un pseudonyme (400).
 
 Toute route est **protégée par défaut** (guard global) : une nouvelle route non annotée `@Public()`
 exige une session, et `@Roles(...)` restreint en plus par rôle.
@@ -60,6 +67,8 @@ exige une session, et `@Roles(...)` restreint en plus par rôle.
 | `/classement` | → `/connexion` | ✓ | → `/tableau-de-bord` | → idem | → idem |
 | `/admin`, `/admin/revue`, `/admin/revue/:id` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
 | `/studio`, `/studio/lecons/:id` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | ✓ (ses leçons) | → idem | ✓ |
+| `/forum`, `/forum/:niveau/:matiere`, `/forum/sujets/:id`, `/forum/charte` | → `/connexion` | ✓ (fermé avec explication si conditions non réunies) | ✓ | → `/tableau-de-bord?acces=refuse` | ✓ |
+| `/admin/moderation` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
 
 C'est l'API qui fait autorité : les pages `/admin` et `/studio` redirigent sur la réponse 403 de
 l'API, pas sur une vérification côté front.
@@ -82,5 +91,6 @@ copie de travail via `GET /admin/lecons/:id`, `GET /admin/lecons/:id/apercu` et
 | Élève de moins de 15 ans sans accord parental | Connexion et cours possibles ; **forum fermé** |
 | Âge d'un élève inconnu | Traité comme moins de 15 ans (règle la plus protectrice) |
 
-L'accès au forum est exposé par `GET /auth/moi` (`accesForum`) et sera appliqué aux routes du forum
-en Phase 7.
+L'accès au forum est exposé par `GET /auth/moi` (`accesForum`) et `GET /forum/etat` (avec la raison
+de fermeture), et appliqué à toutes les routes du forum, lecture comprise. Règles de modération :
+`DOCS/moderation.md`.
