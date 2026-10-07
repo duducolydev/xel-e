@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "prisma": {
-    "seed": "tsx prisma/seed-runner.ts"
+    "seed": "tsx --env-file-if-exists=../../.env prisma/seed-runner.ts"
   },
   "scripts": {
     "dev": "nest start --watch",
@@ -16,10 +16,10 @@
     "e2e": "vitest run --config vitest.e2e.config.ts",
     "generate": "prisma generate --generator client",
     "docs:erd": "prisma generate --generator erd",
-    "seed": "tsx prisma/seed-runner.ts",
+    "seed": "tsx --env-file-if-exists=../../.env prisma/seed-runner.ts",
     "db:migrate:dev": "prisma migrate dev --skip-generate",
     "db:migrate:deploy": "prisma migrate deploy",
-    "db:migrate:down": "tsx prisma/migrate-down.ts",
+    "db:migrate:down": "tsx --env-file-if-exists=../../.env prisma/migrate-down.ts",
     "db:migrate:reset": "prisma migrate reset --force --skip-generate",
     "db:studio": "prisma studio"
   },

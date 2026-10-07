@@ -349,7 +349,11 @@ vues et du taux de réussite ; attribution réservée aux professeurs. `DOCS/acc
   sessions (prof, admin, élève), aperçu KaTeX, refus sans commentaire rejeté, et la vue de l'élève
   visible dans les statistiques du prof ; un élève n'accède pas au studio.
 
-**Correctif trouvé en route** : le test unitaire du seed (purement CPU : argon2id et rendu KaTeX de
+**Correctifs trouvés en route** :
+- `pnpm seed` et `pnpm db:migrate:down` ne lisaient pas le `.env` de la racine (« Environment
+  variable not found: DATABASE_URL ») : les scripts tsx le chargent désormais s'il existe, sans
+  écraser les variables déjà définies (CI).
+- Le test unitaire du seed (purement CPU : argon2id et rendu KaTeX de
 72 leçons, parfois deux fois) dépassait le délai par défaut de 5 s sur une machine chargée ; délai
 porté à 30 s pour ce seul bloc.
 
