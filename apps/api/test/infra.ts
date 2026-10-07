@@ -6,6 +6,10 @@ export const MAILHOG_URL = process.env.MAILHOG_API_URL ?? "http://127.0.0.1:8025
 export async function viderBase(prisma: PrismaClient): Promise<void> {
   await prisma.gainXp.deleteMany();
   await prisma.refreshToken.deleteMany();
+  await prisma.codeLiaison.deleteMany();
+  await prisma.activiteJour.deleteMany();
+  await prisma.preferencesParent.deleteMany();
+  await prisma.resumeEnvoye.deleteMany();
   await prisma.jetonVerification.deleteMany();
   await prisma.signalement.deleteMany();
   await prisma.pieceJointe.deleteMany();
@@ -34,7 +38,7 @@ export async function viderBase(prisma: PrismaClient): Promise<void> {
 export async function viderLimiteurs(): Promise<void> {
   const redis = new Redis(process.env.REDIS_URL ?? "redis://127.0.0.1:6379");
   try {
-    const cles = [...(await redis.keys("rl:*")), ...(await redis.keys("vue:*"))];
+    const cles = [...(await redis.keys("rl:*")), ...(await redis.keys("vue:*")), ...(await redis.keys("presence:*"))];
     if (cles.length > 0) await redis.del(...cles);
   } finally {
     redis.disconnect();

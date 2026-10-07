@@ -6,6 +6,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { BoutonTerminerLecon } from "@/components/bouton-terminer-lecon";
 import { CompteurVue } from "@/components/compteur-vue";
+import { SignalPresence } from "@/components/signal-presence";
 import { EntetePublic } from "@/components/entete-public";
 import { FilAriane } from "@/components/fil-ariane";
 import { lirePublic, SITE_URL } from "@/lib/api-public";
@@ -209,6 +210,7 @@ export default async function PageLecon({
         </nav>
       </main>
       <CompteurVue slug={lecon.slug} />
+      <SignalPresence />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdLecon(lecon) }} />
     </>
   );

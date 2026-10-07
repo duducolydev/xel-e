@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { EntetePublic } from "@/components/entete-public";
 import { FilAriane } from "@/components/fil-ariane";
 import { appelerApi } from "@/lib/api-serveur";
+import { SignalPresence } from "@/components/signal-presence";
 import { ParcoursQuiz } from "./parcours-quiz";
 
 export const metadata: Metadata = { title: "Quiz — Xel-E", robots: { index: false } };
@@ -39,6 +40,7 @@ export default async function PageQuiz({ params }: { params: Params }) {
         />
         <h1 className="text-2xl font-bold text-brand-dark">Quiz : {quiz.lecon.titre}</h1>
         <ParcoursQuiz quiz={quiz} tentativeInitiale={tentative} cheminLecon={chemin} />
+        <SignalPresence />
       </main>
     </>
   );

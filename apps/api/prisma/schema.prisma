@@ -53,6 +53,19 @@ enum StatutCompte {
   EN_ATTENTE_VALIDATION
 }
 
+enum FrequenceResume {
+  HEBDOMADAIRE
+  MENSUELLE
+  AUCUNE
+}
+
+enum CanalNotification {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  SMS
+}
+
 enum TypeJetonVerification {
   CONFIRMATION_EMAIL
   REINITIALISATION_MOT_DE_PASSE
@@ -111,6 +124,10 @@ model User {
   gainsXp           GainXp[]
   commentairesRevue CommentaireRevue[] @relation("CommentairesRevue")
   piecesJointes     PieceJointe[]
+  codesLiaison      CodeLiaison[]      @relation("CodesLiaisonEleve")
+  activites         ActiviteJour[]
+  preferences       PreferencesParent?
+  resumesEnvoyes    ResumeEnvoye[]
 
   @@index([role])
   @@index([niveauId])
@@ -126,6 +143,54 @@ model ParentLink {
 
   @@unique([parentId, enfantId])
   @@index([enfantId])
+}
+
+// Code à usage unique (48 h) généré par l'élève ou l'admin, saisi par le parent pour se lier.
+model CodeLiaison {
+  id        String    @id @default(uuid())
+  eleveId   String
+  eleve     User      @relation("CodesLiaisonEleve", fields: [eleveId], references: [id])
+  codeHash  String    @unique
+  expireLe  DateTime
+  utiliseLe DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([eleveId])
+}
+
+// Minutes d'activité par jour calendaire de Dakar (signal envoyé par les pages leçon et quiz).
+model ActiviteJour {
+  id            String @id @default(uuid())
+  utilisateurId String
+  utilisateur   User   @relation(fields: [utilisateurId], references: [id])
+  jour          String
+  minutes       Int    @default(0)
+
+  @@unique([utilisateurId, jour])
+}
+
+model PreferencesParent {
+  id        String          @id @default(uuid())
+  parentId  String          @unique
+  parent    User            @relation(fields: [parentId], references: [id])
+  frequence FrequenceResume @default(HEBDOMADAIRE)
+  email     Boolean         @default(true)
+  whatsapp  Boolean         @default(false)
+  sms       Boolean         @default(false)
+  telephone String?
+  updatedAt DateTime        @updatedAt
+}
+
+// Trace des résumés envoyés : un seul envoi par parent, période et canal (job rejouable sans doublon).
+model ResumeEnvoye {
+  id       String            @id @default(uuid())
+  parentId String
+  parent   User              @relation(fields: [parentId], references: [id])
+  periode  String
+  canal    CanalNotification
+  envoyeLe DateTime          @default(now())
+
+  @@unique([parentId, periode, canal])
 }
 
 model RefreshToken {

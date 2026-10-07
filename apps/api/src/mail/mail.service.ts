@@ -27,14 +27,19 @@ export class MailService {
   // Un email non parti ne doit pas faire échouer l'action (inscription, etc.) : on journalise.
   async envoyer(email: Email): Promise<void> {
     try {
-      await this.transporter.sendMail({
-        from: this.expediteur,
-        to: email.destinataire,
-        subject: email.sujet,
-        text: email.texte,
-      });
+      await this.envoyerOuEchouer(email);
     } catch (error) {
       this.logger.error(`Échec d'envoi à ${email.destinataire} : ${(error as Error).message}`);
     }
+  }
+
+  // Pour les envois rejoués par une file (résumés) : l'échec remonte pour déclencher une nouvelle tentative.
+  async envoyerOuEchouer(email: Email): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.expediteur,
+      to: email.destinataire,
+      subject: email.sujet,
+      text: email.texte,
+    });
   }
 }

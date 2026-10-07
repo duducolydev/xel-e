@@ -33,6 +33,7 @@
     "@node-rs/argon2": "^2.2.1",
     "@prisma/client": "^5.22.0",
     "@xel-e/shared": "workspace:*",
+    "bullmq": "^6.3.11",
     "cookie-parser": "^1.4.7",
     "ioredis": "^5.4.2",
     "katex": "^0.16.47",

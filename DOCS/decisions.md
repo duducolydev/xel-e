@@ -369,3 +369,39 @@ découle du brief (mineurs, protection des données) et des phases précédentes
   masquage automatique.
 
 **Date** : 2026-10-07 — Phase 7.
+
+---
+
+## D0018 — Espace parent et résumés
+
+**Contexte** : Phase 8 du brief. Quatre choix tranchés par le porteur du projet le 2026-10-07.
+
+**Décisions** :
+- **Liaison** : l'élève (ou l'admin) génère un code de 8 caractères sans ambiguïté (`K7PM-3XQ9`),
+  à usage unique, valable 48 h ; un nouveau code annule le précédent ; seule une empreinte HMAC est
+  stockée. Un parent peut suivre plusieurs enfants, un enfant avoir plusieurs parents. L'élève est
+  notifié quand un parent se lie. Un parent non lié reçoit **403**.
+- **Accord parental séparé de la liaison** : saisir le code donne accès au suivi, pas au forum ; le
+  parent lié d'un enfant de moins de 15 ans peut donner son accord d'un bouton explicite dans son
+  espace (en plus du lien reçu par email en Phase 2).
+- **Temps d'activité mesuré** : les pages leçon et quiz envoient un signal par minute tant qu'elles
+  sont au premier plan ; une minute ne compte qu'une fois par élève (plusieurs onglets) ; agrégé par
+  jour calendaire de Dakar. Sans Redis, la minute n'est pas comptée (pas de double compte).
+- **Résumés** : hebdomadaire (dimanche 18 h Dakar, semaine en cours), mensuel (le 1er à 18 h, mois
+  précédent) ou aucun ; hebdomadaire par défaut. Un seul résumé par parent, tous enfants regroupés.
+  Toujours dans l'espace parent ; email par défaut ; WhatsApp/SMS au choix avec un numéro. Lien de
+  désinscription signé, sans connexion, dans chaque email (action au clic, pas à l'ouverture).
+- **File BullMQ** : un job par période crée un job par parent et par canal (identifiant stable) ;
+  chaque envoi est retenté jusqu'à 6 fois avec un backoff exponentiel (base 60 s) ; une trace
+  `ResumeEnvoye` (unique par parent, période, canal) rend l'envoi idempotent (au plus un envoi
+  réussi enregistré ; un crash entre l'envoi et la trace peut, rarement, provoquer un doublon).
+  Worker dans le processus de l'API ; planification désactivable (`RESUMES_PLANIFIES=false`) pour
+  un futur worker séparé ; déclenchement manuel par l'admin (`POST /admin/resumes/declencher`).
+- **WhatsApp/SMS** : interface `NotificationChannel` ; fournisseur **mock** (journalise, n'envoie
+  rien) en développement et en test ; adaptateur HTTP générique (`NOTIF_PROVIDER=http`,
+  `NOTIF_HTTP_URL`, `NOTIF_HTTP_TOKEN`) en attendant le choix du fournisseur réel, avant la mise en
+  production.
+- Le suivi parental reste gratuit pour l'instant ; son passage en premium éventuel relève de la
+  Phase 10.
+
+**Date** : 2026-10-07 — Phase 8.

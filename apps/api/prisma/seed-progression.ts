@@ -2,6 +2,7 @@ import { PrismaClient, Role } from "@prisma/client";
 import { hasherMotDePasse } from "../src/auth/password";
 import type { PrismaService } from "../src/prisma/prisma.service";
 import { ProgressionService } from "../src/progression/progression.service";
+import { jourLocal } from "../src/progression/temps";
 import { QuizService } from "../src/quiz/quiz.service";
 import { MOT_DE_PASSE_DEMO } from "./seed";
 
@@ -67,5 +68,28 @@ export async function seedProgressionDemo(prisma: PrismaClient, maintenant = new
       },
     });
     for (const slug of slugs.slice(0, camarade.lecons)) await progression.terminerLecon(slug, user.id, maintenant);
+  }
+}
+
+// Espace parent de démonstration (développement uniquement) : le parent de démo suit l'élève de démo,
+// qui a quelques minutes d'activité sur les trois jours où il a terminé ses leçons.
+export async function seedParentDemo(prisma: PrismaClient, maintenant = new Date()): Promise<void> {
+  const [parent, eleve] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { email: "parent.demo@xele.sn" } }),
+    prisma.user.findUniqueOrThrow({ where: { email: "eleve.demo@xele.sn" } }),
+  ]);
+  await prisma.parentLink.upsert({
+    where: { parentId_enfantId: { parentId: parent.id, enfantId: eleve.id } },
+    update: {},
+    create: { parentId: parent.id, enfantId: eleve.id },
+  });
+  const minutes = [25, 18, 32];
+  for (const [index, duree] of minutes.entries()) {
+    const jour = jourLocal(new Date(maintenant.getTime() - (minutes.length - 1 - index) * JOUR_MS));
+    await prisma.activiteJour.upsert({
+      where: { utilisateurId_jour: { utilisateurId: eleve.id, jour } },
+      update: {},
+      create: { utilisateurId: eleve.id, jour, minutes: duree },
+    });
   }
 }

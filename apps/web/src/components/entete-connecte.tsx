@@ -20,6 +20,11 @@ export function EnteteConnecte({ utilisateur }: { utilisateur: UtilisateurCouran
           <span className="hidden text-sm text-brand-light sm:inline">
             {LIBELLES_ROLE[utilisateur.role]}
           </span>
+          {utilisateur.role === "PARENT" ? (
+            <Link href="/parent" className="text-sm font-medium underline-offset-4 hover:underline">
+              Espace parent
+            </Link>
+          ) : null}
           {utilisateur.role !== "PARENT" ? (
             <Link href="/forum" className="text-sm font-medium underline-offset-4 hover:underline">
               Forum

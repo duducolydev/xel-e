@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { EnteteConnecte } from "@/components/entete-connecte";
 import { Alerte } from "@/components/ui";
 import { appelerApi, utilisateurCourant } from "@/lib/api-serveur";
+import { LiaisonParent } from "./liaison-parent";
 import { ProgressionEleve } from "./progression-eleve";
 
 export const metadata: Metadata = { title: "Tableau de bord — Xel-E" };
@@ -20,6 +21,8 @@ export default async function PageTableauDeBord({
   const prenom = utilisateur.nomComplet.split(" ")[0];
   const reponseProgression = utilisateur.role === "ELEVE" ? await appelerApi("/progression/tableau-de-bord") : null;
   const progression = reponseProgression?.ok ? ((await reponseProgression.json()) as TableauDeBordProgression) : null;
+  const reponseParents = utilisateur.role === "ELEVE" ? await appelerApi("/parents/mes-parents") : null;
+  const parents = reponseParents?.ok ? ((await reponseParents.json()) as { nombre: number }) : null;
 
   return (
     <>
@@ -46,6 +49,16 @@ export default async function PageTableauDeBord({
         ) : null}
 
         {progression ? <ProgressionEleve tableau={progression} /> : null}
+
+        {utilisateur.role === "PARENT" ? (
+          <section className="rounded-xl border border-brand-light bg-brand-wash p-5">
+            <h2 className="font-semibold text-brand-dark">Espace parent</h2>
+            <p className="mt-1 text-sm text-gray-700">Suivez le travail de vos enfants et réglez leur résumé d&apos;activité.</p>
+            <Link href="/parent" className="mt-3 inline-block font-semibold text-brand-dark underline underline-offset-4">
+              Ouvrir l&apos;espace parent
+            </Link>
+          </section>
+        ) : null}
 
         {utilisateur.role === "PROFESSEUR" ? (
           <section className="rounded-xl border border-brand-light bg-brand-wash p-5">
@@ -96,6 +109,8 @@ export default async function PageTableauDeBord({
             ) : null}
           </div>
         </section>
+
+        {parents ? <LiaisonParent nombreParents={parents.nombre} /> : null}
       </main>
     </>
   );

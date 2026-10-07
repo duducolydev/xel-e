@@ -428,3 +428,62 @@ parents (choix du porteur du projet) ; pas d'édition ni de suppression par l'au
   reposent sur les signalements.
 - ClamAV demande ~1,5 Go de RAM et 1 à 2 min de démarrage (signatures) ; à dimensionner en
   production.
+
+---
+
+## Phase 8 — Espace parent et notifications
+
+**Fait** :
+- Migration `20261007172025_parents` (réversible, `down.sql` testé) : codes de liaison, minutes
+  d'activité par jour, préférences des parents, trace des résumés envoyés.
+- Liaison parent-enfant : l'élève (ou l'admin) génère un code `XXXX-XXXX` à usage unique valable
+  48 h, que le parent saisit ; plusieurs enfants par parent ; l'élève voit combien de parents le
+  suivent.
+- Espace parent `/parent` : enfants liés, notifications, préférences ; tableau de bord par enfant
+  (temps d'activité des 7 derniers jours en graphique, leçons terminées, scores récents, série, XP
+  de la semaine) ; accord parental pour le forum donné d'un bouton (enfants de moins de 15 ans) ;
+  « ne plus suivre ».
+- Temps d'activité mesuré : signal d'une minute envoyé par les pages leçon et quiz au premier plan,
+  dédoublonné entre onglets.
+- Résumé automatique par **BullMQ** : dimanche 18 h (Dakar) et/ou le 1er du mois à 18 h selon le
+  choix du parent ; dans l'espace parent, par email (avec désinscription en un clic) et par
+  WhatsApp/SMS via `NotificationChannel` (mock en développement, passerelle HTTP configurable) ;
+  un job par canal, retenté avec backoff exponentiel ; envoi idempotent. Déclenchement manuel par
+  l'admin.
+- Texte des résumés à relire : `DOCS/resume-parents.md`.
+- Liens « Espace parent » (en-tête, tableau de bord) ; bloc « Mes parents » sur le tableau de bord
+  élève ; page `/desinscription`.
+
+**Décisions** : `DOCS/decisions.md` D0018 — temps mesuré par les pages, mock seul pour WhatsApp/SMS
+en attendant le fournisseur, accord parental séparé de la liaison, fréquences hebdomadaire,
+mensuelle ou aucune (choix du porteur du projet).
+
+**Tests** :
+- Unitaires (491 côté API) : codes de liaison (format, alphabet sans ambiguïté, empreinte, **usage unique, TTL
+  48 h**), liaison (code expiré, utilisé, concurrence, enfant déjà lié, 403 hors liaison) ;
+  **composition du résumé** (activité de la semaine, **semaine vide ⇒ message d'encouragement**,
+  plusieurs enfants, listes abrégées, texte court tenant dans un SMS) et périodes (semaine ISO à
+  cheval sur deux années, mois précédent) ; **dispatch multi-canaux** (le mock reçoit exactement
+  les messages WhatsApp et SMS attendus ; **échec d'un canal ⇒ erreur remontée pour nouvelle
+  tentative avec backoff**, sans marquer l'envoi) ; planification BullMQ, préférences et jeton de
+  désinscription, temps d'activité.
+- e2e API (312 au total, matrice d'accès étendue à 205 cas) : liaison par code (casse et espaces tolérés, code régénéré, usage unique, code expiré),
+  **403 pour un enfant non lié**, multi-enfants et accord parental ouvrant le forum, temps
+  d'activité ; **déclenchement manuel du job hebdo ⇒ notification in-app + email dans mailhog**
+  + WhatsApp/SMS au mock ; aucun doublon au redéclenchement ; **vraies nouvelles tentatives
+  BullMQ** après deux échecs du canal ; désinscription par le lien de l'email.
+- e2e Playwright (24 au total) : un parent s'inscrit → saisit le code → voit le tableau de bord de l'enfant →
+  reçoit le résumé (in-app et mailhog) ; un parent ne voit pas un enfant non lié (403, retour à son
+  espace).
+
+**Validation** : contenu du résumé à relire dans `DOCS/resume-parents.md` (ton, langue, données).
+
+**Correctifs trouvés en route** : formulations du résumé (« quiz » invariable, « ce mois-ci »,
+« du 5 au 11 octobre ») ; l'attente de fin de file comptait les prochaines occurrences planifiées et
+pouvait conclure trop tôt entre deux changements d'état d'un job (deux observations vides exigées).
+
+**Dette éventuelle** :
+- Fournisseur WhatsApp/SMS réel à choisir et brancher (modèles de messages Meta à faire valider).
+- Le worker BullMQ tourne dans le processus de l'API ; à séparer si la charge le demande
+  (`RESUMES_PLANIFIES=false` côté API).
+- Un crash entre l'envoi et l'enregistrement de sa trace peut, rarement, provoquer un doublon.

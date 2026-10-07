@@ -185,6 +185,46 @@ const MATRICE: Ligne[] = [
   },
   {
     methode: "post",
+    chemin: "/parents/code",
+    attendu: { anonyme: 401, ELEVE: 201, PROFESSEUR: 403, PARENT: 403, ADMIN: 403 },
+  },
+  {
+    methode: "post",
+    chemin: "/activite/presence",
+    attendu: { anonyme: 401, ELEVE: 204, PROFESSEUR: 403, PARENT: 403, ADMIN: 403 },
+  },
+  {
+    methode: "get",
+    chemin: "/parents",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 200, ADMIN: 403 },
+  },
+  {
+    methode: "post",
+    chemin: "/parents/liaison",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 400, ADMIN: 403 },
+  },
+  {
+    methode: "get",
+    chemin: `/parents/enfants/${randomUUID()}`,
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 403 },
+  },
+  {
+    methode: "post",
+    chemin: "/parents/desinscription",
+    attendu: { anonyme: 400, ELEVE: 400, PROFESSEUR: 400, PARENT: 400, ADMIN: 400 },
+  },
+  {
+    methode: "post",
+    chemin: "/admin/resumes/declencher",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 400 },
+  },
+  {
+    methode: "post",
+    chemin: `/admin/eleves/${randomUUID()}/code-liaison`,
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 404 },
+  },
+  {
+    methode: "post",
     chemin: `/lecons/${LECON_DEMO.slug}/vue`,
     attendu: { anonyme: 204, ELEVE: 204, PROFESSEUR: 204, PARENT: 204, ADMIN: 204 },
   },

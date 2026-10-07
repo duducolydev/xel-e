@@ -1,6 +1,6 @@
 # Matrice d'accès — rôle × ressource
 
-État à la fin de la Phase 7. Chaque ligne est vérifiée automatiquement :
+État à la fin de la Phase 8. Chaque ligne est vérifiée automatiquement :
 
 - API : `apps/api/test/acces.e2e-spec.ts` rejoue la matrice ci-dessous avec les comptes de démo
   (`MATRICE` dans le test ⇔ tableau « API » de ce document, à garder identiques).
@@ -46,6 +46,12 @@ Légende : **200/204** autorisé · **401** non connecté · **403** connecté m
 | Lire le forum, publier, signaler, téléverser une pièce jointe — `/forum…` | 401 | 2xx ¹ | 2xx | 403 | 2xx |
 | `GET /forum/pieces-jointes/:id` (message masqué ou supprimé) | 401 | 404 (sauf son auteur) | 404 (idem) | 403 | 200 |
 | `/admin/moderation…` (file, innocenter, supprimer, termes interdits) | 401 | 403 | 403 | 403 | 2xx |
+| `POST /parents/code` (code de liaison pour son parent), `GET /parents/mes-parents`, `POST /activite/presence` | 401 | 2xx | 403 | 403 | 403 |
+| `GET /parents`, `POST /parents/liaison`, `PUT /parents/preferences` | 401 | 403 | 403 | 2xx | 403 |
+| `GET/DELETE /parents/enfants/:id`, `POST /parents/enfants/:id/accord-parental` (enfant **lié**) | 401 | 403 | 403 | 2xx | 403 |
+| Même chose pour un enfant **non lié** | 401 | 403 | 403 | **403** | 403 |
+| `POST /parents/desinscription` (lien des emails, jeton signé) | public | public | public | public | public |
+| `POST /admin/eleves/:id/code-liaison`, `POST /admin/resumes/declencher` | 401 | 403 | 403 | 403 | 2xx |
 
 ¹ Élève : 403 tant que son email n'est pas confirmé, ou, s'il a moins de 15 ans, tant que son
 parent n'a pas donné son accord (message explicite). Publier exige en plus un pseudonyme (400).
@@ -69,6 +75,8 @@ exige une session, et `@Roles(...)` restreint en plus par rôle.
 | `/studio`, `/studio/lecons/:id` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | ✓ (ses leçons) | → idem | ✓ |
 | `/forum`, `/forum/:niveau/:matiere`, `/forum/sujets/:id`, `/forum/charte` | → `/connexion` | ✓ (fermé avec explication si conditions non réunies) | ✓ | → `/tableau-de-bord?acces=refuse` | ✓ |
 | `/admin/moderation` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
+| `/parent`, `/parent/enfants/:id` (enfant lié ; sinon retour à `/parent`) | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | ✓ | → idem |
+| `/desinscription` (lien reçu par email) | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 C'est l'API qui fait autorité : les pages `/admin` et `/studio` redirigent sur la réponse 403 de
 l'API, pas sur une vérification côté front.
