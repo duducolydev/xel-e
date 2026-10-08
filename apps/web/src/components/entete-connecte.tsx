@@ -30,6 +30,11 @@ export function EnteteConnecte({ utilisateur }: { utilisateur: UtilisateurCouran
               BFEM
             </Link>
           ) : null}
+          {utilisateur.role === "ELEVE" || utilisateur.role === "PARENT" ? (
+            <Link href="/abonnement" className="text-sm font-medium underline-offset-4 hover:underline">
+              Abonnement
+            </Link>
+          ) : null}
           {utilisateur.role !== "PARENT" ? (
             <Link href="/forum" className="text-sm font-medium underline-offset-4 hover:underline">
               Forum

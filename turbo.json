@@ -33,7 +33,15 @@
     "WAVE_API_KEY",
     "WAVE_WEBHOOK_SECRET",
     "OM_API_KEY",
-    "OM_WEBHOOK_SECRET"
+    "OM_WEBHOOK_SECRET",
+    "WAVE_API_URL",
+    "OM_MERCHANT_KEY",
+    "OM_API_URL",
+    "OM_WEBPAY_CHEMIN",
+    "OM_DEVISE",
+    "PAIEMENTS_SIMULES",
+    "PAIEMENT_SIMULE_SECRET",
+    "ABONNEMENTS_PLANIFIES"
   ],
   "tasks": {
     "generate": {

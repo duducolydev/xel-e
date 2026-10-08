@@ -13,7 +13,7 @@ export class AccesPremiumService {
   async estAbonne(utilisateurId: string, maintenant = new Date()): Promise<boolean> {
     const abonnements = await this.prisma.abonnement.findMany({
       where: { utilisateurId, statut: "ACTIF" },
-      select: { statut: true, expireLe: true },
+      select: { statut: true, debutLe: true, expireLe: true },
     });
     return aUnAbonnementActif(abonnements, maintenant);
   }

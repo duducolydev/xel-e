@@ -34,12 +34,38 @@ export const envSchema = z.object({
     .transform((valeur) => valeur === "true"),
   // Délai de base des nouvelles tentatives d'envoi (doublé à chaque échec).
   RESUME_BACKOFF_MS: z.coerce.number().int().positive().default(60_000),
+  // Cycle horaire des abonnements (expirations, relances J-3) ; désactivé pendant les tests.
+  ABONNEMENTS_PLANIFIES: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((valeur) => valeur === "true"),
   // Tests uniquement : remplace la durée officielle des examens blancs (refusé en production).
   EXAMEN_DUREE_TEST_SECONDES: z.preprocess(videVersAbsent, z.coerce.number().int().positive().optional()),
+  // Paiements. Un fournisseur n'est proposé que si ses clés sont configurées.
+  WAVE_API_KEY: z.preprocess(videVersAbsent, z.string().optional()),
+  WAVE_WEBHOOK_SECRET: z.preprocess(videVersAbsent, z.string().optional()),
+  WAVE_API_URL: z.string().url().default("https://api.wave.com"),
+  // Orange Money Web Payment : OM_API_KEY = en-tête « Basic … » fourni par Orange Developer.
+  OM_API_KEY: z.preprocess(videVersAbsent, z.string().optional()),
+  OM_MERCHANT_KEY: z.preprocess(videVersAbsent, z.string().optional()),
+  OM_WEBHOOK_SECRET: z.preprocess(videVersAbsent, z.string().optional()),
+  OM_API_URL: z.string().url().default("https://api.orange.com"),
+  OM_WEBPAY_CHEMIN: z.string().default("/orange-money-webpay/dev/v1"),
+  OM_DEVISE: z.string().default("OUV"),
+  // Simulateur de paiement (développement, tests) : interdit en production.
+  PAIEMENTS_SIMULES: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((valeur) => valeur === "true"),
+  PAIEMENT_SIMULE_SECRET: z.string().min(16).default("secret-du-simulateur-de-paiement"),
 })
   .refine((env) => env.NOTIF_PROVIDER !== "http" || env.NOTIF_HTTP_URL !== undefined, {
     message: "NOTIF_HTTP_URL est obligatoire quand NOTIF_PROVIDER=http.",
     path: ["NOTIF_HTTP_URL"],
+  })
+  .refine((env) => env.NODE_ENV !== "production" || !env.PAIEMENTS_SIMULES, {
+    message: "PAIEMENTS_SIMULES doit valoir false en production.",
+    path: ["PAIEMENTS_SIMULES"],
   })
   .refine((env) => env.NODE_ENV !== "production" || env.EXAMEN_DUREE_TEST_SECONDES === undefined, {
     message: "EXAMEN_DUREE_TEST_SECONDES est réservé aux tests.",

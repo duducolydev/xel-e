@@ -65,11 +65,16 @@ export function simulerMoyenne(lignes: Pick<LigneSimulation, "coefficient" | "no
 
 export interface AbonnementEtat {
   statut: "ACTIF" | "EXPIRE" | "ANNULE";
+  // Début de la période (une période achetée d'avance ne donne pas accès avant son début).
+  debutLe?: Date;
   expireLe: Date | null;
 }
 
 export function aUnAbonnementActif(abonnements: AbonnementEtat[], maintenant: Date): boolean {
-  return abonnements.some((a) => a.statut === "ACTIF" && (a.expireLe === null || a.expireLe.getTime() > maintenant.getTime()));
+  const t = maintenant.getTime();
+  return abonnements.some(
+    (a) => a.statut === "ACTIF" && (a.debutLe === undefined || a.debutLe.getTime() <= t) && (a.expireLe === null || a.expireLe.getTime() > t),
+  );
 }
 
 // Contenu gratuit : ouvert à tous. Contenu premium : abonnement actif, ou administration.

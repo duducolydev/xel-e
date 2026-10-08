@@ -14,3 +14,4 @@ if (existsSync(fichier)) {
 // Pas de résumé planifié pendant les tests (ils sont déclenchés à la main) ; nouvelles tentatives rapides.
 process.env.RESUMES_PLANIFIES ??= "false";
 process.env.RESUME_BACKOFF_MS ??= "50";
+process.env.ABONNEMENTS_PLANIFIES ??= "false";

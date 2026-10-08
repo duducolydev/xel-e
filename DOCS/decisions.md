@@ -441,3 +441,40 @@ découle du brief (mineurs, protection des données) et des phases précédentes
   professeurs ni les parents pour l'instant.
 
 **Date** : 2026-10-08 — Phase 9.
+
+---
+
+## D0020 — Paiements et abonnement Premium
+
+**Contexte** : Phase 10 du brief. Quatre choix tranchés par le porteur du projet le 2026-10-08.
+
+**Décisions** :
+- **Offres** : Premium mensuel et annuel, prix en FCFA stockés en base et modifiables par
+  l'administration ; valeurs **provisoires** 1 500 FCFA/mois et 15 000 FCFA/an (deux mois offerts),
+  marquées « à confirmer ». Le niveau gratuit n'a pas de ligne.
+- **Payeur** : Premium est attaché au compte de l'**élève** ; il peut payer lui-même ou un **parent
+  lié** paie pour l'un de ses enfants. Professeurs et administration ne souscrivent pas (l'admin peut
+  toujours accorder un accès à la main, D0019).
+- **Renouvellement manuel** (Wave et Orange Money ne prélèvent pas automatiquement) : chaque
+  paiement achète une période ; payer avant l'échéance **prolonge à partir de la fin de la période
+  en cours** (aucun chevauchement, aucun jour perdu — garanti par un verrou sur l'élève pendant la
+  confirmation). Mois calendaires (31 janvier + 1 mois = fin février).
+- **Relance J-3** (in-app + email à l'élève et aux parents qui ont déjà payé pour lui), une seule
+  fois par période, sauf si une période suivante est déjà payée. **Expiration** par un job horaire
+  (BullMQ, heure de Dakar) : rétrogradation douce, les copies, résultats et l'historique restent ;
+  message clair côté élève (« Ton accès Premium a pris fin le … »).
+- **Webhooks** : signature vérifiée sur le corps brut (sinon 401, aucune écriture), horodatage
+  limité à 5 minutes (anti-rejeu), journal `EvenementPaiement` unique par (fournisseur, id
+  d'événement), confirmation conditionnelle `EN_ATTENTE → CONFIRME` (une même `ref_externe`
+  ne crée jamais deux paiements ni deux périodes), contrôle du montant, file de retraitement des
+  échecs (8 tentatives, backoff exponentiel). Le fournisseur reçoit 200 dès que l'événement est
+  journalisé : la suite est notre responsabilité.
+- **Fournisseurs** : interface `PaymentProvider` ; simulateur complet (développement, tests,
+  interdit en production) ; adaptateurs **Wave** (Checkout API) et **Orange Money** (Web Payment)
+  écrits d'après leur documentation publique, actifs seulement si leurs clés sont configurées, **à
+  valider en sandbox réelle** avant la production (procédure : `DOCS/paiements.md`).
+- **Reçus** : numérotation continue par année (`XE-2026-000001`), PDF téléchargeable depuis « Mon
+  abonnement » par le payeur et le bénéficiaire.
+- Le suivi parental reste gratuit (D0018) ; seul le module BFEM a du contenu Premium pour l'instant.
+
+**Date** : 2026-10-08 — Phase 10.

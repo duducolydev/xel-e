@@ -48,6 +48,7 @@ function createMockPrisma() {
   const questions: Record<string, unknown>[] = [];
   const termes = new Set<string>();
   const epreuves: Record<string, unknown>[] = [];
+  const plans: Record<string, unknown>[] = [];
   const examens: Record<string, unknown>[] = [];
 
   // Comme en base, une leçon créée sans « version » est à 0 (jamais publiée).
@@ -96,6 +97,12 @@ function createMockPrisma() {
         return data;
       }),
     },
+    plan: {
+      upsert: vi.fn(async ({ create }: { create: Record<string, unknown> }) => {
+        if (!plans.some((p) => p.code === create.code)) plans.push(create);
+        return create;
+      }),
+    },
     termeInterdit: {
       createMany: vi.fn(async ({ data }: { data: { terme: string }[] }) => {
         for (const { terme } of data) termes.add(terme);
@@ -104,7 +111,7 @@ function createMockPrisma() {
     },
   } as unknown as PrismaClient;
 
-  const stores = { niveau, matiere, chapitre, lecon, quiz, user, versions, questions, termes, epreuves, examens };
+  const stores = { niveau, matiere, chapitre, lecon, quiz, user, versions, questions, termes, epreuves, examens, plans };
 
   return { prisma, stores };
 }
@@ -187,6 +194,18 @@ describe("seedAll", { timeout: 30_000 }, () => {
     expect(stores.examens.map((e) => [e.slug, e.premium])).toEqual([
       ["bfem-maths-examen-blanc-1", false],
       ["bfem-maths-examen-blanc-2", true],
+    ]);
+  });
+
+  it("installe les offres Premium aux prix provisoires, sans doublon", async () => {
+    const { prisma, stores } = createMockPrisma();
+
+    await seedAll(prisma);
+    await seedAll(prisma);
+
+    expect(stores.plans.map((p) => [p.code, p.prixFcfa, p.aConfirmer])).toEqual([
+      ["PREMIUM_MENSUEL", 1500, true],
+      ["PREMIUM_ANNUEL", 15000, true],
     ]);
   });
 

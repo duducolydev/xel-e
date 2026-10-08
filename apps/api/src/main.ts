@@ -7,7 +7,8 @@ import type { Env } from "./config/env";
 import { configurerApp } from "./configure-app";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Corps brut conservé : la signature des webhooks de paiement porte sur les octets reçus.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
   configurerApp(app);
   app.enableShutdownHooks();
 

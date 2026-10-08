@@ -1,9 +1,10 @@
-import type { AnnaleDto, ExamenResume } from "@xel-e/shared";
+import type { AnnaleDto, ExamenResume, PageAbonnement } from "@xel-e/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { nombre } from "@/components/corrige-detaille";
 import { EnteteConnecte } from "@/components/entete-connecte";
+import { Alerte } from "@/components/ui";
 import { appelerApi, utilisateurCourant } from "@/lib/api-serveur";
 
 export const metadata: Metadata = { title: "Préparer le BFEM — Xel-E" };
@@ -24,6 +25,10 @@ export default async function PageBfem() {
   if (!reponseExamens.ok || !reponseAnnales.ok) throw new Error(`Réponse inattendue de l'API : ${reponseExamens.status}`);
   const examens = (await reponseExamens.json()) as ExamenResume[];
   const annales = (await reponseAnnales.json()) as AnnaleDto[];
+  // État Premium de l'élève : message clair si son accès a pris fin.
+  const reponseAbonnement = utilisateur.role === "ELEVE" ? await appelerApi("/abonnement") : null;
+  const etat = reponseAbonnement?.ok ? ((await reponseAbonnement.json()) as PageAbonnement).etat : null;
+  const finPremium = etat && !etat.premium && etat.jusquau ? new Date(etat.jusquau).toLocaleDateString("fr-FR", { dateStyle: "long", timeZone: "Africa/Dakar" }) : null;
 
   return (
     <>
@@ -43,6 +48,18 @@ export default async function PageBfem() {
             </Link>
           </div>
         </div>
+
+        {finPremium ? (
+          <Alerte ton="info">
+            <span data-testid="premium-expire">
+              Ton accès Premium a pris fin le {finPremium}. Les examens blancs Premium sont de nouveau verrouillés ; tes résultats et ton
+              historique restent disponibles.{" "}
+              <Link href="/abonnement" className="font-semibold underline">
+                Renouveler Premium
+              </Link>
+            </span>
+          </Alerte>
+        ) : null}
 
         <section aria-labelledby="titre-examens" className="space-y-3">
           <h2 id="titre-examens" className="text-lg font-semibold text-gray-900">
@@ -81,7 +98,12 @@ export default async function PageBfem() {
                     </Link>
                   ) : (
                     <p className="text-sm text-gray-600">
-                      <span aria-hidden="true">🔒 </span>Réservé aux abonnés Premium.
+                      <span aria-hidden="true">🔒 </span>Réservé aux abonnés Premium.{" "}
+                      {utilisateur.role === "ELEVE" ? (
+                        <Link href="/abonnement" className="font-semibold text-brand-dark underline">
+                          Passer à Premium
+                        </Link>
+                      ) : null}
                     </p>
                   )}
                 </li>

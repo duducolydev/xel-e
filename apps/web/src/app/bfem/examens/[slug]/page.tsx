@@ -63,7 +63,12 @@ export default async function PageExamen({ params }: { params: Promise<{ slug: s
             <BoutonCommencer slug={examen.slug} />
           </>
         ) : (
-          <Alerte ton="info">Cet examen blanc est réservé aux abonnés Premium.</Alerte>
+          <Alerte ton="info">
+            Cet examen blanc est réservé aux abonnés Premium.{" "}
+            <Link href="/abonnement" className="font-semibold underline">
+              Voir les offres Premium
+            </Link>
+          </Alerte>
         )}
       </main>
     </>

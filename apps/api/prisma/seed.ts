@@ -3,6 +3,7 @@ import { INFOS_MATIERES, type Matiere } from "@xel-e/shared";
 import { hasherMotDePasse } from "../src/auth/password";
 import { rendreLecon } from "../src/contenus/rendu-markdown";
 import { TERMES_INITIAUX } from "../src/forum/termes-initiaux";
+import { PLANS_INITIAUX } from "../src/paiements/plans-initiaux";
 import { seedBfem } from "./bfem-demo";
 import { CHAPITRE_DEMO, contenuGenerique, LECON_DEMO, QUIZ_DEMO, questionsGeneriques } from "./contenus-demo";
 
@@ -211,4 +212,12 @@ export async function seedAll(prisma: PrismaClient) {
   await seedPublication(prisma, admin?.id ?? null);
   await seedTermesInterdits(prisma);
   await seedBfem(prisma);
+  await seedPlans(prisma);
+}
+
+// Offres Premium (prix provisoires, jamais écrasés si l'administration les a modifiés).
+export async function seedPlans(prisma: PrismaClient) {
+  for (const plan of PLANS_INITIAUX) {
+    await prisma.plan.upsert({ where: { code: plan.code }, update: {}, create: { ...plan, actif: true, aConfirmer: true } });
+  }
 }

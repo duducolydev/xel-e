@@ -32,8 +32,11 @@ export async function viderBase(prisma: PrismaClient): Promise<void> {
   await prisma.versionLecon.deleteMany();
   await prisma.lecon.deleteMany();
   await prisma.chapitre.deleteMany();
+  await prisma.evenementPaiement.deleteMany();
+  await prisma.compteurRecu.deleteMany();
   await prisma.paiement.deleteMany();
   await prisma.abonnement.deleteMany();
+  await prisma.plan.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.parentLink.deleteMany();
   await prisma.user.deleteMany();

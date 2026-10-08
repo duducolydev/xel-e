@@ -1,6 +1,6 @@
 # Matrice d'accès — rôle × ressource
 
-État à la fin de la Phase 9. Chaque ligne est vérifiée automatiquement :
+État à la fin de la Phase 10. Chaque ligne est vérifiée automatiquement :
 
 - API : `apps/api/test/acces.e2e-spec.ts` rejoue la matrice ci-dessous avec les comptes de démo
   (`MATRICE` dans le test ⇔ tableau « API » de ce document, à garder identiques).
@@ -57,6 +57,11 @@ Légende : **200/204** autorisé · **401** non connecté · **403** connecté m
 | Même chose pour un contenu **Premium** sans abonnement actif | 401 | **403** | 403 | 403 | 2xx (admin) |
 | Lire, remplir, rendre **sa** copie d'examen blanc ; celle **d'un autre** | 401 | 2xx ; 404 | 403 | 403 | 2xx ; 404 |
 | `/admin/bfem…` (épreuves, examens, annales), `POST /admin/abonnements` | 401 | 403 | 403 | 403 | 2xx |
+| `GET /abonnement`, `POST /paiements` (pour soi ; parent : pour un enfant **lié**, sinon 403) | 401 | 2xx | 403 | 2xx | 403 |
+| `GET /paiements/:id`, `/verifier`, `/recu` (payeur ou bénéficiaire ; sinon 404) | 401 | 2xx | 403 | 2xx | 403 |
+| `POST /webhooks/:fournisseur` (public, signature obligatoire) | 401 sans signature valide | — | — | — | — |
+| `/paiements/simulateur/…` (hors production, payeur du paiement) | 401 | 2xx | 403 | 2xx | 403 |
+| `/admin/plans…`, `POST /admin/abonnements/cycle` | 401 | 403 | 403 | 403 | 2xx |
 
 ¹ Élève : 403 tant que son email n'est pas confirmé, ou, s'il a moins de 15 ans, tant que son
 parent n'a pas donné son accord (message explicite). Publier exige en plus un pseudonyme (400).
@@ -84,6 +89,8 @@ exige une session, et `@Roles(...)` restreint en plus par rôle.
 | `/desinscription` (lien reçu par email) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `/bfem`, `/bfem/examens/:slug`, `/bfem/copies/:id…`, `/bfem/historique`, `/bfem/simulation` | → `/connexion` | ✓ | → `/tableau-de-bord?acces=refuse` | → idem | ✓ |
 | `/admin/bfem` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
+| `/abonnement`, `/abonnement/retour`, `/paiement/simulateur` | → `/connexion` | ✓ | → `/tableau-de-bord?acces=refuse` | ✓ (enfants liés) | → idem |
+| `/admin/paiements` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
 
 C'est l'API qui fait autorité : les pages `/admin` et `/studio` redirigent sur la réponse 403 de
 l'API, pas sur une vérification côté front.

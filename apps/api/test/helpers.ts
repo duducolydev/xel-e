@@ -8,7 +8,7 @@ export * from "./infra";
 
 export async function creerApp(): Promise<INestApplication> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app = moduleRef.createNestApplication();
+  const app = moduleRef.createNestApplication({ rawBody: true });
   configurerApp(app);
   await app.init();
   return app;

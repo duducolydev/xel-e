@@ -94,6 +94,11 @@ describe("garde premium", () => {
     expect(aUnAbonnementActif([{ statut: "ACTIF", expireLe: null }], maintenant)).toBe(true);
   });
 
+  it("une période achetée d'avance n'ouvre l'accès qu'à son début", () => {
+    expect(aUnAbonnementActif([{ statut: "ACTIF", debutLe: new Date("2026-10-20T00:00:00Z"), expireLe: new Date("2026-11-20T00:00:00Z") }], maintenant)).toBe(false);
+    expect(aUnAbonnementActif([{ statut: "ACTIF", debutLe: new Date("2026-10-01T00:00:00Z"), expireLe: new Date("2026-11-01T00:00:00Z") }], maintenant)).toBe(true);
+  });
+
   it("abonnement expiré, annulé ou absent : pas d'accès", () => {
     expect(aUnAbonnementActif([{ statut: "ACTIF", expireLe: new Date("2026-10-08T09:59:59Z") }], maintenant)).toBe(false);
     expect(aUnAbonnementActif([{ statut: "EXPIRE", expireLe: null }], maintenant)).toBe(false);

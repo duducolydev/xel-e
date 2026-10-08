@@ -259,6 +259,36 @@ const MATRICE: Ligne[] = [
     attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 400 },
   },
   {
+    methode: "get",
+    chemin: "/abonnement",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 403, PARENT: 400, ADMIN: 403 },
+  },
+  {
+    methode: "post",
+    chemin: "/paiements",
+    attendu: { anonyme: 401, ELEVE: 400, PROFESSEUR: 403, PARENT: 400, ADMIN: 403 },
+  },
+  {
+    methode: "get",
+    chemin: `/paiements/${randomUUID()}`,
+    attendu: { anonyme: 401, ELEVE: 404, PROFESSEUR: 403, PARENT: 404, ADMIN: 403 },
+  },
+  {
+    methode: "post",
+    chemin: "/webhooks/simule",
+    attendu: { anonyme: 401, ELEVE: 401, PROFESSEUR: 401, PARENT: 401, ADMIN: 401 },
+  },
+  {
+    methode: "get",
+    chemin: "/admin/plans",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "post",
+    chemin: "/admin/abonnements/cycle",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
+  },
+  {
     methode: "post",
     chemin: `/lecons/${LECON_DEMO.slug}/vue`,
     attendu: { anonyme: 204, ELEVE: 204, PROFESSEUR: 204, PARENT: 204, ADMIN: 204 },

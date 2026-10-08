@@ -109,5 +109,6 @@ test("sans abonnement, l'examen premium est verrouillé", async ({ browser }) =>
 
   const premium = page.getByRole("listitem").filter({ hasText: "Examen blanc BFEM n°2" });
   await expect(premium.getByText("Réservé aux abonnés Premium.")).toBeVisible();
-  await expect(premium.getByRole("link")).toHaveCount(0);
+  await expect(premium.getByRole("link", { name: "Voir l'examen" })).toHaveCount(0);
+  await expect(premium.getByRole("link", { name: "Passer à Premium" })).toBeVisible();
 });

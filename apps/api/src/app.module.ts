@@ -10,6 +10,7 @@ import { ForumModule } from "./forum/forum.controller";
 import { HealthModule } from "./health/health.module";
 import { MailModule } from "./mail/mail.module";
 import { NotificationsModule } from "./notifications/notifications.service";
+import { PaiementsModule } from "./paiements/paiements.controller";
 import { ParentsModule } from "./parents/parents.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 import { ProgressionModule } from "./progression/progression.controller";
@@ -38,6 +39,7 @@ import { StudioModule } from "./studio/studio.controller";
     ForumModule,
     ParentsModule,
     BfemModule,
+    PaiementsModule,
   ],
 })
 export class AppModule {}

@@ -48,6 +48,12 @@ enum StatutPaiement {
   ECHOUE
 }
 
+enum StatutEvenement {
+  RECU
+  TRAITE
+  ECHEC
+}
+
 enum StatutCompte {
   ACTIF
   EN_ATTENTE_VALIDATION
@@ -109,27 +115,29 @@ model User {
   refreshTokens      RefreshToken[]
   jetonsVerification JetonVerification[]
 
-  enfants           ParentLink[]       @relation("ParentDeUser")
-  parents           ParentLink[]       @relation("EnfantDeUser")
-  progressions      Progression[]
-  tentatives        Tentative[]
-  badges            BadgeUtilisateur[]
-  sujetsForum       SujetForum[]
-  messages          Message[]
-  signalements      Signalement[]
-  abonnements       Abonnement[]
-  notifications     Notification[]
-  leconsRedigees    Lecon[]
-  versionsPubliees  VersionLecon[]     @relation("VersionsPubliees")
-  gainsXp           GainXp[]
-  commentairesRevue CommentaireRevue[] @relation("CommentairesRevue")
-  piecesJointes     PieceJointe[]
-  codesLiaison      CodeLiaison[]      @relation("CodesLiaisonEleve")
-  activites         ActiviteJour[]
-  preferences       PreferencesParent?
-  resumesEnvoyes    ResumeEnvoye[]
-  copiesExamen      CopieExamen[]
-  estimationsBfem   EstimationBfem[]
+  enfants            ParentLink[]       @relation("ParentDeUser")
+  parents            ParentLink[]       @relation("EnfantDeUser")
+  progressions       Progression[]
+  tentatives         Tentative[]
+  badges             BadgeUtilisateur[]
+  sujetsForum        SujetForum[]
+  messages           Message[]
+  signalements       Signalement[]
+  abonnements        Abonnement[]
+  notifications      Notification[]
+  leconsRedigees     Lecon[]
+  versionsPubliees   VersionLecon[]     @relation("VersionsPubliees")
+  gainsXp            GainXp[]
+  commentairesRevue  CommentaireRevue[] @relation("CommentairesRevue")
+  piecesJointes      PieceJointe[]
+  codesLiaison       CodeLiaison[]      @relation("CodesLiaisonEleve")
+  activites          ActiviteJour[]
+  preferences        PreferencesParent?
+  resumesEnvoyes     ResumeEnvoye[]
+  copiesExamen       CopieExamen[]
+  paiementsEffectues Paiement[]         @relation("PaiementsPayeur")
+  paiementsRecus     Paiement[]         @relation("PaiementsBeneficiaire")
+  estimationsBfem    EstimationBfem[]
 
   @@index([role])
   @@index([niveauId])
@@ -645,33 +653,97 @@ model EstimationBfem {
 // Abonnements et paiements
 // ---------------------------------------------------------------------------
 
+// Offre payante (prix en FCFA, modifiable par l'administration). Le niveau gratuit n'a pas de ligne.
+model Plan {
+  id         String   @id @default(uuid())
+  code       String   @unique
+  libelle    String
+  prixFcfa   Int
+  dureeMois  Int
+  actif      Boolean  @default(true)
+  // Vrai tant que le prix n'a pas été confirmé par l'administration.
+  aConfirmer Boolean  @default(true)
+  ordre      Int
+  updatedAt  DateTime @updatedAt
+
+  paiements Paiement[]
+}
+
+// Une période d'accès Premium de l'élève : [debutLe, expireLe[. Les périodes ne se chevauchent pas :
+// un renouvellement anticipé commence à la fin de la période en cours.
 model Abonnement {
   id            String           @id @default(uuid())
   utilisateurId String
   utilisateur   User             @relation(fields: [utilisateurId], references: [id])
   plan          String
   statut        StatutAbonnement @default(ACTIF)
+  debutLe       DateTime         @default(now())
   expireLe      DateTime?
+  // Relance envoyée 3 jours avant l'échéance (une seule fois).
+  relanceLe     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  paiements Paiement[]
+  paiement Paiement?
 
   @@index([utilisateurId])
+  @@index([statut, expireLe])
 }
 
 model Paiement {
-  id           String         @id @default(uuid())
-  abonnementId String
-  abonnement   Abonnement     @relation(fields: [abonnementId], references: [id])
-  fournisseur  String
-  statut       StatutPaiement @default(EN_ATTENTE)
-  montant      Int
-  refExterne   String         @unique
-  createdAt    DateTime       @default(now())
+  id                String         @id @default(uuid())
+  // Payeur (l'élève ou un parent lié) et bénéficiaire (toujours un élève).
+  payeurId          String
+  payeur            User           @relation("PaiementsPayeur", fields: [payeurId], references: [id])
+  beneficiaireId    String
+  beneficiaire      User           @relation("PaiementsBeneficiaire", fields: [beneficiaireId], references: [id])
+  planId            String
+  plan              Plan           @relation(fields: [planId], references: [id])
+  // Période créée à la confirmation du paiement.
+  abonnementId      String?        @unique
+  abonnement        Abonnement?    @relation(fields: [abonnementId], references: [id])
+  fournisseur       String
+  statut            StatutPaiement @default(EN_ATTENTE)
+  montant           Int
+  devise            String         @default("XOF")
+  // Notre référence, transmise au fournisseur ; la sienne (session, transaction) est refExterne.
+  referenceInterne  String         @unique
+  refExterne        String?        @unique
+  urlPaiement       String?
+  // Secret par paiement attendu dans la notification (Orange Money).
+  jetonNotification String?
+  confirmeLe        DateTime?
+  numeroRecu        String?        @unique
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
-  @@index([abonnementId])
+  @@index([payeurId])
+  @@index([beneficiaireId])
+}
+
+// Journal des webhooks reçus (signature valide) : un même événement n'est traité qu'une fois, et les
+// échecs de traitement sont rejoués par la file de retraitement.
+model EvenementPaiement {
+  id             String          @id @default(uuid())
+  fournisseur    String
+  idEvenement    String
+  type           String
+  charge         Json
+  statut         StatutEvenement @default(RECU)
+  tentatives     Int             @default(0)
+  derniereErreur String?
+  recuLe         DateTime        @default(now())
+  traiteLe       DateTime?
+
+  @@unique([fournisseur, idEvenement])
+  @@index([statut])
+}
+
+// Numérotation continue des reçus, par année.
+model CompteurRecu {
+  annee  Int @id
+  valeur Int @default(0)
 }
 
 // ---------------------------------------------------------------------------

@@ -551,3 +551,62 @@ stocké, quel que soit son type).
 - Les examens blancs ne corrigent pas la rédaction ni les démonstrations (questions à réponse
   précise) ; à compléter éventuellement par une correction par les professeurs.
 - Accès Premium accordé à la main en attendant les paiements (Phase 10).
+
+---
+
+## Phase 10 — Paiements Wave / Orange Money et freemium
+
+**Fait** :
+- Migration `20261008160357_paiements` (réversible, `down.sql` testé ; le retour arrière supprime
+  les paiements, qui n'existent pas dans l'ancien schéma) : offres (prix en FCFA, insérées par la
+  migration avec des valeurs provisoires), paiements (payeur, bénéficiaire, références, reçu),
+  journal des événements de webhook, compteur de reçus, début et relance des périodes d'abonnement.
+- Offres Gratuit / Premium mensuel / Premium annuel ; page « Mon abonnement » (`/abonnement`) : état
+  de l'accès, offres, paiement, historique et reçus PDF numérotés. Un parent lié paie pour son
+  enfant depuis la même page.
+- Interface commune `PaymentProvider` : **simulateur** complet (page de paiement simulée, webhooks
+  signés), adaptateurs **Wave** (Checkout API, signature `Wave-Signature`) et **Orange Money** (Web
+  Payment, jeton OAuth, jeton de notification) d'après leur documentation, actifs dès que leurs
+  clés sont configurées.
+- Webhooks : vérification de signature sur le corps brut (401, aucune écriture sinon), anti-rejeu,
+  idempotence par événement et par paiement, contrôle du montant, file BullMQ de retraitement des
+  échecs ; vérification auprès du fournisseur au retour de l'utilisateur.
+- Cycle d'abonnement : activation immédiate à la confirmation, renouvellement anticipé sans
+  chevauchement, expiration horaire avec rétrogradation douce, relance J-3 (in-app et email),
+  messages clairs dans l'espace BFEM quand l'accès a pris fin.
+- Administration `/admin/paiements` : confirmation des prix, activation des offres, cycle à la demande.
+- Procédure de validation en sandbox réelle : `DOCS/paiements.md`.
+
+**Décisions** : `DOCS/decisions.md` D0020 — prix provisoires, élève ou parent lié payeur,
+renouvellement manuel avec relance J-3, adaptateurs écrits d'après la documentation et à valider en
+sandbox (choix du porteur du projet).
+
+**Tests** :
+- Unitaires (626 côté API) : **idempotence des webhooks** (même événement rejoué ⇒ non retraité ;
+  même `ref_externe` confirmée deux fois ⇒ un seul paiement, une seule période) ; **signature
+  invalide ⇒ 401 et aucun effet en base** (secret faux, corps modifié, horodatage trop ancien,
+  absente) ; **transitions d'abonnement** (actif → expiré → renouvelé, renouvellement anticipé
+  enchaîné, chevauchements interdits, mois calendaires, période future sans accès avant son début) ;
+  relance J-3 (fenêtre, une seule fois, pas si déjà renouvelé) ; adaptateurs Wave et Orange Money
+  sur réponses simulées (requêtes, états, signatures, jeton OAuth réutilisé) ; montant inattendu,
+  file de retraitement ; reçu (contenu, échappement) ; cohérence entre la migration et le seed.
+- e2e API (403 au total, matrice d'accès étendue à 270 cas) : offre → paiement simulé → webhook →
+  **examen Premium accessible immédiatement** → reçu PDF ; webhook brut signé rejoué, signature
+  invalide sans effet ; parent payeur et renouvellement enchaîné ; **expiration ⇒ 403 avec message
+  clair**, notification, données conservées ; prix confirmés par l'admin.
+- e2e Playwright (27 au total) : un élève choisit Premium → checkout simulé → webhook de
+  confirmation → l'examen blanc Premium devient accessible immédiatement → expiration simulée ⇒
+  le contenu Premium redevient verrouillé avec un message clair (pas d'erreur brute).
+
+**Validation** : test manuel en sandbox réelle de Wave et d'Orange Money avant toute mise en
+production, selon la procédure de `DOCS/paiements.md`.
+
+**Correctif trouvé en route** : sur une page pas encore interactive, un clic sur « Payer » ou dans
+le simulateur se perdait sans effet ; ces boutons restent désactivés jusqu'à ce que la page soit
+prête.
+
+**Dette éventuelle** :
+- Adaptateurs Wave et Orange Money non éprouvés contre les vraies API (sandbox à faire) ; choix à
+  confirmer entre l'API Web Payment d'Orange Developer et l'API marchande de Sonatel.
+- Pas de remboursement ni d'annulation depuis l'interface (à traiter avec le support).
+- Prix provisoires à confirmer dans `/admin/paiements`.

@@ -20,6 +20,6 @@ import { VuesService } from "./vues.service";
     ExportPdfService,
     VuesService,
   ],
-  exports: [PublicationService, MediasService, StockageService],
+  exports: [PublicationService, MediasService, StockageService, PdfService],
 })
 export class ContenusModule {}
