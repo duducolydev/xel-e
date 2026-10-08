@@ -128,6 +128,8 @@ model User {
   activites         ActiviteJour[]
   preferences       PreferencesParent?
   resumesEnvoyes    ResumeEnvoye[]
+  copiesExamen      CopieExamen[]
+  estimationsBfem   EstimationBfem[]
 
   @@index([role])
   @@index([niveauId])
@@ -531,6 +533,112 @@ model TermeInterdit {
   id        String   @id @default(uuid())
   terme     String   @unique
   createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Module BFEM (annales, examens blancs, simulation de moyenne)
+// ---------------------------------------------------------------------------
+
+// Épreuve du BFEM : durée et coefficient éditables par l'administration (valeurs officielles à saisir).
+model EpreuveBfem {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  libelle      String
+  // Matière de la plateforme (Maths, PC, SVT) ; null pour les épreuves sans contenu Xel-E.
+  matiere      String?
+  dureeMinutes Int?
+  coefficient  Float
+  ordre        Int
+  // Vrai tant que les valeurs n'ont pas été confirmées par l'administration.
+  aVerifier    Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
+
+  annales     Annale[]
+  examens     ExamenBlanc[]
+  estimations EstimationBfem[]
+}
+
+model Annale {
+  id         String      @id @default(uuid())
+  epreuveId  String
+  epreuve    EpreuveBfem @relation(fields: [epreuveId], references: [id])
+  annee      Int
+  titre      String
+  sujetCle   String
+  corrigeCle String?
+  premium    Boolean     @default(false)
+  deletedAt  DateTime?
+  createdAt  DateTime    @default(now())
+
+  @@index([epreuveId, annee])
+}
+
+model ExamenBlanc {
+  id        String      @id @default(uuid())
+  slug      String      @unique
+  titre     String
+  epreuveId String
+  epreuve   EpreuveBfem @relation(fields: [epreuveId], references: [id])
+  consignes String      @default("")
+  premium   Boolean     @default(false)
+  publie    Boolean     @default(false)
+  deletedAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  questions QuestionExamen[]
+  copies    CopieExamen[]
+}
+
+model QuestionExamen {
+  id              String       @id @default(uuid())
+  examenId        String
+  examen          ExamenBlanc  @relation(fields: [examenId], references: [id])
+  type            TypeQuestion
+  enonce          String
+  choix           Json?
+  reponseCorrecte Json
+  explication     String?
+  bareme          Int          @default(1)
+  ordre           Int
+
+  @@index([examenId])
+}
+
+// Copie d'un examen blanc : le minuteur fait foi côté serveur (expireLe).
+model CopieExamen {
+  id             String      @id @default(uuid())
+  examenId       String
+  examen         ExamenBlanc @relation(fields: [examenId], references: [id])
+  eleveId        String
+  eleve          User        @relation(fields: [eleveId], references: [id])
+  // { questionId: { valeur, le } } : chaque réponse est horodatée par le serveur.
+  reponses       Json        @default("{}")
+  demarreLe      DateTime    @default(now())
+  expireLe       DateTime
+  // "<eleveId>:<examenId>" tant que la copie est en cours : une seule copie en cours par examen.
+  enCoursCle     String?     @unique
+  soumiseLe      DateTime?
+  soumissionAuto Boolean     @default(false)
+  note           Float?
+  pointsObtenus  Float?
+  pointsTotal    Float?
+  correction     Json?
+
+  @@index([eleveId, soumiseLe])
+}
+
+// Notes estimées par l'élève pour les épreuves sans examen blanc (simulation de moyenne).
+model EstimationBfem {
+  id        String      @id @default(uuid())
+  eleveId   String
+  eleve     User        @relation(fields: [eleveId], references: [id])
+  epreuveId String
+  epreuve   EpreuveBfem @relation(fields: [epreuveId], references: [id])
+  note      Float
+  updatedAt DateTime    @updatedAt
+
+  @@unique([eleveId, epreuveId])
 }
 
 // ---------------------------------------------------------------------------

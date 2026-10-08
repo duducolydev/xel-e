@@ -1,6 +1,6 @@
 # Matrice d'accès — rôle × ressource
 
-État à la fin de la Phase 8. Chaque ligne est vérifiée automatiquement :
+État à la fin de la Phase 9. Chaque ligne est vérifiée automatiquement :
 
 - API : `apps/api/test/acces.e2e-spec.ts` rejoue la matrice ci-dessous avec les comptes de démo
   (`MATRICE` dans le test ⇔ tableau « API » de ce document, à garder identiques).
@@ -52,6 +52,11 @@ Légende : **200/204** autorisé · **401** non connecté · **403** connecté m
 | Même chose pour un enfant **non lié** | 401 | 403 | 403 | **403** | 403 |
 | `POST /parents/desinscription` (lien des emails, jeton signé) | public | public | public | public | public |
 | `POST /admin/eleves/:id/code-liaison`, `POST /admin/resumes/declencher` | 401 | 403 | 403 | 403 | 2xx |
+| `GET /bfem/examens`, `/bfem/annales`, `/bfem/historique`, `/bfem/simulation`, `/bfem/epreuves` | 401 | 200 | 403 | 403 | 200 |
+| Démarrer un examen blanc ou télécharger une annale **gratuits** | 401 | 2xx | 403 | 403 | 2xx |
+| Même chose pour un contenu **Premium** sans abonnement actif | 401 | **403** | 403 | 403 | 2xx (admin) |
+| Lire, remplir, rendre **sa** copie d'examen blanc ; celle **d'un autre** | 401 | 2xx ; 404 | 403 | 403 | 2xx ; 404 |
+| `/admin/bfem…` (épreuves, examens, annales), `POST /admin/abonnements` | 401 | 403 | 403 | 403 | 2xx |
 
 ¹ Élève : 403 tant que son email n'est pas confirmé, ou, s'il a moins de 15 ans, tant que son
 parent n'a pas donné son accord (message explicite). Publier exige en plus un pseudonyme (400).
@@ -77,6 +82,8 @@ exige une session, et `@Roles(...)` restreint en plus par rôle.
 | `/admin/moderation` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
 | `/parent`, `/parent/enfants/:id` (enfant lié ; sinon retour à `/parent`) | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | ✓ | → idem |
 | `/desinscription` (lien reçu par email) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `/bfem`, `/bfem/examens/:slug`, `/bfem/copies/:id…`, `/bfem/historique`, `/bfem/simulation` | → `/connexion` | ✓ | → `/tableau-de-bord?acces=refuse` | → idem | ✓ |
+| `/admin/bfem` | → `/connexion` | → `/tableau-de-bord?acces=refuse` | → idem | → idem | ✓ |
 
 C'est l'API qui fait autorité : les pages `/admin` et `/studio` redirigent sur la réponse 403 de
 l'API, pas sur une vérification côté front.

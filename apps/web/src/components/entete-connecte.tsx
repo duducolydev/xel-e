@@ -25,6 +25,11 @@ export function EnteteConnecte({ utilisateur }: { utilisateur: UtilisateurCouran
               Espace parent
             </Link>
           ) : null}
+          {utilisateur.role === "ELEVE" ? (
+            <Link href="/bfem" className="text-sm font-medium underline-offset-4 hover:underline">
+              BFEM
+            </Link>
+          ) : null}
           {utilisateur.role !== "PARENT" ? (
             <Link href="/forum" className="text-sm font-medium underline-offset-4 hover:underline">
               Forum

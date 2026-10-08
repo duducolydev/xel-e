@@ -10,3 +10,4 @@ export * from "./progression";
 export * from "./studio";
 export * from "./forum";
 export * from "./parents";
+export * from "./bfem";

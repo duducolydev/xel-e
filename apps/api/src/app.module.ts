@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { join } from "node:path";
 import { AdminModule } from "./admin/admin.module";
 import { AuthModule } from "./auth/auth.module";
+import { BfemModule } from "./bfem/bfem.controller";
 import { ContenusModule } from "./contenus/contenus.module";
 import { validateEnv } from "./config/env";
 import { ForumModule } from "./forum/forum.controller";
@@ -36,6 +37,7 @@ import { StudioModule } from "./studio/studio.controller";
     StudioModule,
     ForumModule,
     ParentsModule,
+    BfemModule,
   ],
 })
 export class AppModule {}

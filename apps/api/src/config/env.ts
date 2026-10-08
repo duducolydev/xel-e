@@ -34,10 +34,17 @@ export const envSchema = z.object({
     .transform((valeur) => valeur === "true"),
   // Délai de base des nouvelles tentatives d'envoi (doublé à chaque échec).
   RESUME_BACKOFF_MS: z.coerce.number().int().positive().default(60_000),
-}).refine((env) => env.NOTIF_PROVIDER !== "http" || env.NOTIF_HTTP_URL !== undefined, {
-  message: "NOTIF_HTTP_URL est obligatoire quand NOTIF_PROVIDER=http.",
-  path: ["NOTIF_HTTP_URL"],
-});
+  // Tests uniquement : remplace la durée officielle des examens blancs (refusé en production).
+  EXAMEN_DUREE_TEST_SECONDES: z.preprocess(videVersAbsent, z.coerce.number().int().positive().optional()),
+})
+  .refine((env) => env.NOTIF_PROVIDER !== "http" || env.NOTIF_HTTP_URL !== undefined, {
+    message: "NOTIF_HTTP_URL est obligatoire quand NOTIF_PROVIDER=http.",
+    path: ["NOTIF_HTTP_URL"],
+  })
+  .refine((env) => env.NODE_ENV !== "production" || env.EXAMEN_DUREE_TEST_SECONDES === undefined, {
+    message: "EXAMEN_DUREE_TEST_SECONDES est réservé aux tests.",
+    path: ["EXAMEN_DUREE_TEST_SECONDES"],
+  });
 
 export type Env = z.infer<typeof envSchema>;
 

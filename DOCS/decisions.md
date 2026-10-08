@@ -405,3 +405,39 @@ découle du brief (mineurs, protection des données) et des phases précédentes
   Phase 10.
 
 **Date** : 2026-10-07 — Phase 8.
+
+---
+
+## D0019 — Module BFEM
+
+**Contexte** : Phase 9 du brief. Quatre choix tranchés par le porteur du projet le 2026-10-08.
+
+**Décisions** :
+- **Barème** : durée et coefficient de chaque épreuve du BFEM sont stockés en base et **éditables par
+  l'administration** ; les valeurs de départ sont **provisoires** (marquées « à vérifier » dans
+  l'interface) tant que les valeurs officielles n'ont pas été saisies. Épreuves listées : Français,
+  Mathématiques, Sciences physiques, SVT, Histoire-Géographie, Anglais, Deuxième langue, EPS.
+- **Examens blancs** : Maths, PC et SVT ; correction automatique (moteur des quiz). La durée est
+  celle de l'épreuve. **Le serveur fait foi** : la limite est fixée au démarrage, chaque réponse est
+  horodatée à sa réception, une réponse reçue après la limite est refusée et ignorée à la correction.
+  La copie est rendue automatiquement à la fin du temps par un job BullMQ différé (+1 s), et, par
+  sécurité, dès qu'on la relit après la limite. Une seule copie en cours par élève et par examen ;
+  examens repassables. Les questions d'un examen ne changent pas pendant qu'une copie est en cours.
+- **Notes** : note sur 20 = points obtenus / points du sujet × 20, arrondie au centième.
+- **Simulation de moyenne** : dernière note d'examen blanc pour Maths/PC/SVT, sinon note estimée par
+  l'élève ; les autres épreuves sont estimées par l'élève. Moyenne pondérée par les coefficients des
+  épreuves notées, arrondie au centième une seule fois ; mention indicative sur le barème habituel
+  (10 Passable, 12 Assez bien, 14 Bien, 16 Très bien). Présentée comme une estimation, pas comme les
+  règles officielles d'admission (à vérifier).
+- **Premium (avant les paiements)** : les annales sont gratuites par défaut ; le premier examen blanc
+  de chaque matière est gratuit, les suivants Premium (choix porté par un drapeau par examen et par
+  annale). Accès Premium = abonnement `ACTIF` non expiré ; l'administration accède à tout et peut
+  accorder un accès Premium à la main (email ou identifiant, nombre de jours).
+- **Contenus** : la banque d'annales est alimentée par l'administration (PDF analysés par ClamAV,
+  15 Mo max.) ; deux examens blancs de démonstration en Maths au format BFEM (le second Premium) ;
+  les autres examens sont créés par l'équipe depuis `/admin/bfem` (même éditeur de questions que le
+  studio). Durée raccourcie en test par `EXAMEN_DUREE_TEST_SECONDES` (refusée en production).
+- **Accès** : élèves (toutes classes, d'abord pensé pour la 3e) et administration ; pas les
+  professeurs ni les parents pour l'instant.
+
+**Date** : 2026-10-08 — Phase 9.

@@ -487,3 +487,67 @@ pouvait conclure trop tôt entre deux changements d'état d'un job (deux observa
 - Le worker BullMQ tourne dans le processus de l'API ; à séparer si la charge le demande
   (`RESUMES_PLANIFIES=false` côté API).
 - Un crash entre l'envoi et l'enregistrement de sa trace peut, rarement, provoquer un doublon.
+
+---
+
+## Phase 9 — Module BFEM (annales et examens blancs)
+
+**Fait** :
+- Migration `20261008150439_bfem` (réversible, `down.sql` testé) : épreuves du BFEM (durée,
+  coefficient, insérées par la migration avec des valeurs provisoires), annales, examens blancs et
+  leurs questions, copies, estimations de notes.
+- Espace `/bfem` (élèves) : examens blancs (gratuit ou Premium), annales téléchargeables par épreuve
+  et par session, historique, simulation de moyenne.
+- Examens blancs chronométrés : durée officielle de l'épreuve, **minuteur serveur** (limite fixée au
+  démarrage, réponses horodatées par le serveur, refusées après la limite), affiché dans la page et
+  recalé sur l'heure du serveur ; **soumission automatique** à la fin du temps par un job BullMQ
+  différé, même page fermée, et à la relecture de la copie ; écran de résultats avec note sur 20 et
+  corrigé détaillé (composant partagé avec les quiz).
+- Simulation de moyenne : dernière note d'examen blanc pour Maths/PC/SVT, notes estimées pour les
+  autres épreuves, moyenne pondérée et mention indicative.
+- Historique : une courbe par matière (notes sur 20 dans le temps) et le tableau des examens passés.
+- Premium (préparation de la Phase 10) : drapeau `premium` par examen et par annale, garde côté API
+  (403 sans abonnement actif), octroi manuel d'un accès Premium par l'admin.
+- Administration `/admin/bfem` : confirmation des durées et coefficients officiels, création et
+  édition d'examens blancs (éditeur de questions du studio), ajout d'annales (PDF analysés par
+  ClamAV), octroi de Premium.
+- Deux examens blancs de démonstration en Maths au format BFEM (sur 20 ; le second Premium) ; sujet
+  et corrigé à relire dans `DOCS/examen-blanc-maths.md`.
+- Liens « BFEM » (en-tête des élèves, tableau de bord, administration).
+
+**Décisions** : `DOCS/decisions.md` D0019 — barème éditable par l'admin avec valeurs provisoires,
+simulation sur les trois matières plus estimations, premier examen de chaque matière gratuit,
+examen de démonstration rédigé par nous (choix du porteur du projet).
+
+**Tests** :
+- Unitaires (557 côté API) : **minuteur** (limite, expiration à la milliseconde près, **soumission
+  après expiration : seules les réponses antérieures à la limite comptent**, réponse refusée après
+  la limite, copie rendue automatiquement à la relecture, finalisation idempotente, deux onglets) ;
+  **simulation de moyenne** (coefficients, épreuves sans note, arrondi au centième documenté,
+  mentions) ; **garde premium** (abonnement actif, expiré, annulé, absent ; administration) ;
+  cohérence des examens de démonstration (chaque bonne réponse rapporte tous ses points, total 20,
+  formes de réponses acceptées) ; annales (PDF, antivirus, accès), historique, épreuves, file de
+  soumission automatique.
+- e2e API (362 au total, matrice d'accès étendue à 240 cas) : examen lancé → réponses → **copie
+  rendue par le serveur à la fin du temps sans action de l'élève** → réponse tardive refusée →
+  résultats ; examen Premium refusé puis ouvert après octroi ; historique de deux examens ;
+  simulation pondérée ; annales (téléversement, fichier de test EICAR refusé par ClamAV,
+  téléchargement, annale Premium refusée sans abonnement).
+- e2e Playwright (26 au total) : un élève de 3e lance un examen blanc → le minuteur s'affiche → à
+  expiration (durée raccourcie à 15 s en test), soumission automatique et écran de résultats ; après
+  un second examen rendu à la main, **l'historique montre les deux examens avec leurs scores** ;
+  examen Premium verrouillé sans abonnement.
+
+**Validation** : examen blanc complet à relire dans `DOCS/examen-blanc-maths.md` (fidélité au
+format du BFEM).
+
+**Correctif trouvé en route** : l'antivirus des annales n'était appelé qu'après la vérification du
+format PDF ; il passe désormais en premier, comme pour le forum (un fichier infecté n'est jamais
+stocké, quel que soit son type).
+
+**Dette éventuelle** :
+- Durées et coefficients officiels à saisir dans `/admin/bfem` (valeurs provisoires pour l'instant).
+- Pas de vraies annales fournies : la banque est à alimenter par l'équipe.
+- Les examens blancs ne corrigent pas la rédaction ni les démonstrations (questions à réponse
+  précise) ; à compléter éventuellement par une correction par les professeurs.
+- Accès Premium accordé à la main en attendant les paiements (Phase 10).

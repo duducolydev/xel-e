@@ -224,6 +224,41 @@ const MATRICE: Ligne[] = [
     attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 404 },
   },
   {
+    methode: "get",
+    chemin: "/bfem/examens",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "post",
+    chemin: "/bfem/examens/bfem-maths-examen-blanc-2/copies",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: `/bfem/copies/${randomUUID()}`,
+    attendu: { anonyme: 401, ELEVE: 404, PROFESSEUR: 403, PARENT: 403, ADMIN: 404 },
+  },
+  {
+    methode: "get",
+    chemin: "/bfem/annales",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "get",
+    chemin: "/bfem/simulation",
+    attendu: { anonyme: 401, ELEVE: 200, PROFESSEUR: 403, PARENT: 403, ADMIN: 200 },
+  },
+  {
+    methode: "post",
+    chemin: "/admin/bfem/examens",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 400 },
+  },
+  {
+    methode: "post",
+    chemin: "/admin/abonnements",
+    attendu: { anonyme: 401, ELEVE: 403, PROFESSEUR: 403, PARENT: 403, ADMIN: 400 },
+  },
+  {
     methode: "post",
     chemin: `/lecons/${LECON_DEMO.slug}/vue`,
     attendu: { anonyme: 204, ELEVE: 204, PROFESSEUR: 204, PARENT: 204, ADMIN: 204 },

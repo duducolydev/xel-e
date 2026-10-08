@@ -213,5 +213,6 @@ export class ModerationController {
   imports: [ContenusModule],
   controllers: [ForumController, ModerationController],
   providers: [ForumService, ModerationService, PiecesJointesService, TermesService, AntivirusService],
+  exports: [AntivirusService],
 })
 export class ForumModule {}

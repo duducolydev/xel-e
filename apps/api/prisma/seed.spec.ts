@@ -10,6 +10,7 @@ import {
   NIVEAUX_SEED,
   seedAll,
 } from "./seed";
+import { EPREUVES_INITIALES } from "../src/bfem/epreuves-initiales";
 import { TERMES_INITIAUX } from "../src/forum/termes-initiaux";
 
 function makeUpsertModel(keyOf: (where: unknown) => string) {
@@ -46,6 +47,8 @@ function createMockPrisma() {
   const versions: Record<string, unknown>[] = [];
   const questions: Record<string, unknown>[] = [];
   const termes = new Set<string>();
+  const epreuves: Record<string, unknown>[] = [];
+  const examens: Record<string, unknown>[] = [];
 
   // Comme en base, une leçon créée sans « version » est à 0 (jamais publiée).
   const lecons = () => [...lecon.store.values()];
@@ -76,6 +79,23 @@ function createMockPrisma() {
       }),
     },
     user: { upsert: user.upsert },
+    epreuveBfem: {
+      upsert: vi.fn(async ({ create }: { create: Record<string, unknown> }) => {
+        const existante = epreuves.find((e) => e.code === create.code);
+        if (existante) return existante;
+        const epreuve = { id: `epreuve-${epreuves.length + 1}`, ...create };
+        epreuves.push(epreuve);
+        return epreuve;
+      }),
+      findUniqueOrThrow: vi.fn(async ({ where }: { where: { code: string } }) => epreuves.find((e) => e.code === where.code)),
+    },
+    examenBlanc: {
+      findUnique: vi.fn(async ({ where }: { where: { slug: string } }) => examens.find((e) => e.slug === where.slug) ?? null),
+      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
+        examens.push(data);
+        return data;
+      }),
+    },
     termeInterdit: {
       createMany: vi.fn(async ({ data }: { data: { terme: string }[] }) => {
         for (const { terme } of data) termes.add(terme);
@@ -84,7 +104,7 @@ function createMockPrisma() {
     },
   } as unknown as PrismaClient;
 
-  const stores = { niveau, matiere, chapitre, lecon, quiz, user, versions, questions, termes };
+  const stores = { niveau, matiere, chapitre, lecon, quiz, user, versions, questions, termes, epreuves, examens };
 
   return { prisma, stores };
 }
@@ -155,6 +175,19 @@ describe("seedAll", { timeout: 30_000 }, () => {
     await seedAll(prisma);
 
     expect([...stores.termes].sort()).toEqual([...TERMES_INITIAUX].sort());
+  });
+
+  it("installe les épreuves du BFEM et deux examens blancs de démonstration, sans doublon", async () => {
+    const { prisma, stores } = createMockPrisma();
+
+    await seedAll(prisma);
+    await seedAll(prisma);
+
+    expect(stores.epreuves.map((e) => e.code)).toEqual(EPREUVES_INITIALES.map((e) => e.code));
+    expect(stores.examens.map((e) => [e.slug, e.premium])).toEqual([
+      ["bfem-maths-examen-blanc-1", false],
+      ["bfem-maths-examen-blanc-2", true],
+    ]);
   });
 
   it("est idempotent : relancer le seed ne duplique rien", async () => {

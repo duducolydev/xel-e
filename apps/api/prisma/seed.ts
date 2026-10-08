@@ -3,6 +3,7 @@ import { INFOS_MATIERES, type Matiere } from "@xel-e/shared";
 import { hasherMotDePasse } from "../src/auth/password";
 import { rendreLecon } from "../src/contenus/rendu-markdown";
 import { TERMES_INITIAUX } from "../src/forum/termes-initiaux";
+import { seedBfem } from "./bfem-demo";
 import { CHAPITRE_DEMO, contenuGenerique, LECON_DEMO, QUIZ_DEMO, questionsGeneriques } from "./contenus-demo";
 
 export { LECON_DEMO, QUIZ_DEMO };
@@ -209,4 +210,5 @@ export async function seedAll(prisma: PrismaClient) {
   const admin = comptes.find((compte) => compte.role === Role.ADMIN);
   await seedPublication(prisma, admin?.id ?? null);
   await seedTermesInterdits(prisma);
+  await seedBfem(prisma);
 }

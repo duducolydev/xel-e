@@ -50,6 +50,20 @@ export default async function PageTableauDeBord({
 
         {progression ? <ProgressionEleve tableau={progression} /> : null}
 
+        {utilisateur.role === "ELEVE" ? (
+          <section className="rounded-xl border border-brand-light bg-brand-wash p-5">
+            <h2 className="font-semibold text-brand-dark">Préparer le BFEM</h2>
+            <p className="mt-1 text-sm text-gray-700">
+              {utilisateur.niveau === "3e"
+                ? "Examens blancs chronométrés, annales et estimation de ta moyenne : entraîne-toi dans les conditions de l'examen."
+                : "Examens blancs et annales du BFEM, pour t'entraîner dès maintenant."}
+            </p>
+            <Link href="/bfem" className="mt-3 inline-block font-semibold text-brand-dark underline underline-offset-4">
+              Ouvrir l&apos;espace BFEM
+            </Link>
+          </section>
+        ) : null}
+
         {utilisateur.role === "PARENT" ? (
           <section className="rounded-xl border border-brand-light bg-brand-wash p-5">
             <h2 className="font-semibold text-brand-dark">Espace parent</h2>

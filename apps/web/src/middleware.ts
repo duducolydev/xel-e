@@ -52,6 +52,7 @@ export const config = {
     "/studio/:path*",
     "/forum/:path*",
     "/parent/:path*",
+    "/bfem/:path*",
     "/cours/:niveau/:matiere/:slug/quiz",
     "/quiz/:path*",
     "/mes-quiz",

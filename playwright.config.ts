@@ -7,6 +7,8 @@ const baseURL = `http://localhost:${PORT_WEB}`;
 
 // Durée de vie courte pour que le test de rotation observe une vraie expiration de l'accès.
 export const TTL_ACCES_E2E_SECONDES = 20;
+// Durée raccourcie des examens blancs (la durée officielle est de 1 à 2 h).
+export const DUREE_EXAMEN_E2E_SECONDES = 15;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -39,6 +41,7 @@ export default defineConfig({
         API_PORT: String(PORT_API),
         APP_URL: baseURL,
         JWT_ACCESS_TTL_SECONDS: String(TTL_ACCES_E2E_SECONDES),
+        EXAMEN_DUREE_TEST_SECONDES: String(DUREE_EXAMEN_E2E_SECONDES),
       },
     },
     {

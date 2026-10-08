@@ -5,6 +5,12 @@ export const MAILHOG_URL = process.env.MAILHOG_API_URL ?? "http://127.0.0.1:8025
 
 export async function viderBase(prisma: PrismaClient): Promise<void> {
   await prisma.gainXp.deleteMany();
+  await prisma.estimationBfem.deleteMany();
+  await prisma.copieExamen.deleteMany();
+  await prisma.questionExamen.deleteMany();
+  await prisma.examenBlanc.deleteMany();
+  await prisma.annale.deleteMany();
+  await prisma.epreuveBfem.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.codeLiaison.deleteMany();
   await prisma.activiteJour.deleteMany();
